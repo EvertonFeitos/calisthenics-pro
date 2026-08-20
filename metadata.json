@@ -1,0 +1,6 @@
+{
+  "name": "Calistenia Pro",
+  "description": "Aplicativo de treino de calistenia progressivo com 5 níveis, timer integrado, acompanhamento de repetições, histórico, progresso e análise inteligente com Gemini.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
