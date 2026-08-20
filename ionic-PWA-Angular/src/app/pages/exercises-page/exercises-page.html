@@ -1,0 +1,223 @@
+<div class="space-y-4 animate-fadeIn">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#121212] border border-[#222] p-5 rounded-[28px] shadow-lg">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <span class="text-[#888] text-[10px] uppercase tracking-[0.2em] font-bold">Biblioteca de Movimentos</span>
+        <span class="text-indigo-400 text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/20">
+          {{ store.exercises().length }} cadastrados
+        </span>
+      </div>
+      <h1 class="text-lg font-black text-[#F0F0F0] tracking-tight">
+        Exercícios & Execuções Corretas
+      </h1>
+      <p class="text-xs text-[#888] mt-0.5">
+        Veja vídeos tutoriais, ilustrações, postura adequada e personalize ou adicione novos exercícios.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      (click)="openCreateExercise()"
+      class="self-start sm:self-auto flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-full text-xs font-bold text-white shadow-lg shadow-indigo-600/20 transition-all active:scale-95 border border-indigo-400/30"
+    >
+      Novo Exercício
+    </button>
+  </div>
+
+  <div class="space-y-2.5">
+    <div class="relative">
+      <input
+        [value]="searchQuery()"
+        (input)="searchQuery.set(($any($event.target).value || '').toString())"
+        type="text"
+        placeholder="Buscar por nome, músculo ou técnica (ex: Planche, Flexão, Barra)..."
+        class="w-full bg-[#121212] border border-[#222] focus:border-indigo-500/50 rounded-2xl pl-4 pr-4 py-2.5 text-xs text-[#F0F0F0] placeholder:text-[#666] outline-none transition-all shadow-inner"
+      />
+    </div>
+
+    <div class="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+      @for (category of categories; track category.id) {
+        <button
+          type="button"
+          (click)="selectedCategory.set(category.id)"
+          [class]="selectedCategory() === category.id
+            ? 'text-xs font-bold px-3 py-1.5 rounded-full whitespace-nowrap transition-all border bg-indigo-600 text-white border-indigo-500 shadow-sm'
+            : 'text-xs font-bold px-3 py-1.5 rounded-full whitespace-nowrap transition-all border bg-[#141414] text-[#888] border-[#242424] hover:text-[#ccc] hover:bg-[#1a1a1a]'"
+        >
+          {{ category.label }}
+        </button>
+      }
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+    @for (exercise of filteredExercises(); track exercise.id) {
+      <div class="bg-[#121212] hover:bg-[#151515] border border-[#222] hover:border-indigo-500/40 rounded-[28px] p-4 flex flex-col justify-between transition-all group shadow-sm">
+        <div>
+          <div class="flex items-center justify-between gap-2 mb-2">
+            <span class="text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              {{ categoryLabel(exercise.category) }}
+            </span>
+
+            <div class="flex items-center gap-1">
+              @if (exercise.videoUrl) {
+                <span class="text-[10px] font-bold text-indigo-300 bg-indigo-950/60 border border-indigo-500/30 px-2 py-0.5 rounded-md">
+                  Vídeo
+                </span>
+              }
+              @if (exercise.imageUrl) {
+                <span class="text-[10px] font-bold text-emerald-300 bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded-md">
+                  Foto
+                </span>
+              }
+              <span class="text-[10px] font-bold text-[#888] bg-[#1a1a1a] px-2 py-0.5 rounded-md border border-[#262626]">
+                {{ exercise.type === 'TIME' ? 'Isometria' : 'Repetições' }}
+              </span>
+            </div>
+          </div>
+
+          <h3 class="text-sm font-black text-[#F0F0F0] group-hover:text-indigo-300 transition-colors">
+            {{ exercise.name }}
+          </h3>
+          <p class="text-[11px] text-indigo-400/80 font-medium mb-2">
+            {{ exercise.muscleGroup }}
+          </p>
+
+          @if (exercise.instruction) {
+            <p class="text-xs text-[#888] line-clamp-2 mb-3 leading-relaxed">
+              {{ exercise.instruction }}
+            </p>
+          }
+
+          @if (exercise.videoUrl || exercise.imageUrl) {
+            <div class="mb-3">
+              <app-exercise-media-viewer
+                [imageUrl]="exercise.imageUrl"
+                [videoUrl]="exercise.videoUrl"
+                [exerciseName]="exercise.name"
+                [collapsible]="true"
+                [defaultCollapsed]="true"
+              ></app-exercise-media-viewer>
+            </div>
+          }
+        </div>
+
+        <div class="pt-2 border-t border-[#202020] flex items-center justify-end gap-2">
+          <button
+            type="button"
+            (click)="openEditExercise(exercise)"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#181818] hover:bg-[#222] text-[#ccc] hover:text-indigo-300 text-xs font-bold border border-[#262626] transition-colors"
+          >
+            Editar / Mídia
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+
+  @if (filteredExercises().length === 0) {
+    <div class="bg-[#121212] border border-[#222] rounded-[32px] p-8 text-center">
+      <div class="w-14 h-14 rounded-2xl bg-[#181818] border border-[#222] text-[#666] flex items-center justify-center mx-auto mb-3">+</div>
+      <h4 class="text-sm font-bold text-[#ccc]">Nenhum exercício encontrado</h4>
+      <p class="text-xs text-[#777] mt-1">Tente buscar por outro termo ou cadastre um novo exercício.</p>
+    </div>
+  }
+</div>
+
+<ion-modal
+  [isOpen]="isCreatingExercise() || editingExercise() !== null"
+  cssClass="editor-modal"
+  (didDismiss)="closeEditor()"
+>
+  <ng-template>
+    <div class="p-5 bg-[#121212] text-[#F0F0F0] max-h-[90vh] overflow-y-auto">
+      <div class="flex items-start justify-between gap-4 pb-4 border-b border-[#222]">
+        <div>
+          <h3 class="font-black text-lg">
+            {{ editingExercise() ? 'Editar Exercício' : 'Novo Exercício' }}
+          </h3>
+          <p class="text-xs text-[#888] mt-1">
+            Cadastre movimentos, dicas técnicas e mídias tutoriais.
+          </p>
+        </div>
+        <button (click)="closeEditor()" class="text-[#888] hover:text-white text-sm font-bold">Fechar</button>
+      </div>
+
+      <form [formGroup]="exerciseForm" class="space-y-4 mt-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="sm:col-span-2">
+            <label class="text-xs font-bold text-[#ccc] block mb-1">Nome do Exercício</label>
+            <input formControlName="name" class="w-full rounded-2xl p-3 text-xs text-[#F0F0F0] bento-input outline-none" />
+          </div>
+          <div class="sm:col-span-2">
+            <label class="text-xs font-bold text-[#ccc] block mb-1">Descrição</label>
+            <textarea formControlName="description" rows="2" class="w-full rounded-2xl p-3 text-xs text-[#F0F0F0] bento-input outline-none"></textarea>
+          </div>
+          <div>
+            <label class="text-xs font-bold text-[#ccc] block mb-1">Tipo</label>
+            <select formControlName="type" class="w-full rounded-2xl p-3 text-xs text-[#F0F0F0] bento-input outline-none">
+              <option value="REPETITIONS">Repetições</option>
+              <option value="TIME">Tempo</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs font-bold text-[#ccc] block mb-1">Categoria</label>
+            <select formControlName="category" class="w-full rounded-2xl p-3 text-xs text-[#F0F0F0] bento-input outline-none">
+              <option value="push">push</option>
+              <option value="pull">pull</option>
+              <option value="legs_core">legs_core</option>
+              <option value="arms">arms</option>
+              <option value="skills">skills</option>
+              <option value="fullbody">fullbody</option>
+            </select>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="text-xs font-bold text-[#ccc] block mb-1">Músculos Trabalhados</label>
+            <input formControlName="muscleGroup" class="w-full rounded-2xl p-3 text-xs text-[#F0F0F0] bento-input outline-none" />
+          </div>
+          <div class="sm:col-span-2">
+            <label class="text-xs font-bold text-[#ccc] block mb-1">Instruções</label>
+            <textarea formControlName="instruction" rows="2" class="w-full rounded-2xl p-3 text-xs text-[#F0F0F0] bento-input outline-none"></textarea>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="text-xs font-bold text-[#ccc] block mb-1">Dicas Rápidas</label>
+            <textarea formControlName="tipsText" rows="2" class="w-full rounded-2xl p-3 text-xs text-[#F0F0F0] bento-input outline-none" placeholder="Uma dica por linha"></textarea>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="text-xs font-bold text-[#ccc] block mb-1">URL do Vídeo</label>
+            <input formControlName="videoUrl" class="w-full rounded-2xl p-3 text-xs text-[#F0F0F0] bento-input outline-none" />
+          </div>
+          <div class="sm:col-span-2">
+            <label class="text-xs font-bold text-[#ccc] block mb-1">URL da Imagem</label>
+            <input formControlName="imageUrl" class="w-full rounded-2xl p-3 text-xs text-[#F0F0F0] bento-input outline-none" />
+          </div>
+        </div>
+
+        @if (exerciseForm.value.videoUrl || exerciseForm.value.imageUrl) {
+          <div class="space-y-2">
+            <h4 class="text-sm font-extrabold">Pré-visualização</h4>
+            <app-exercise-media-viewer
+              [videoUrl]="exerciseForm.value.videoUrl || undefined"
+              [imageUrl]="exerciseForm.value.imageUrl || undefined"
+              [exerciseName]="exerciseForm.value.name || 'Exercício'"
+            ></app-exercise-media-viewer>
+          </div>
+        }
+
+        <div class="flex gap-2.5 pt-2">
+          @if (editingExercise()) {
+            <button type="button" (click)="deleteExercise()" class="py-3 px-4 rounded-full border border-rose-500/30 text-rose-300 font-bold text-xs">
+              Excluir
+            </button>
+          }
+          <button type="button" (click)="closeEditor()" class="flex-1 py-3 rounded-full border border-[#262626] text-[#ccc] font-semibold text-xs hover:bg-[#181818]">
+            Cancelar
+          </button>
+          <button type="button" (click)="saveExercise()" class="flex-1 py-3 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs">
+            Salvar Exercício
+          </button>
+        </div>
+      </form>
+    </div>
+  </ng-template>
+</ion-modal>

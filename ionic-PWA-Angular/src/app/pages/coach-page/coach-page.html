@@ -1,0 +1,227 @@
+<div class="space-y-4 animate-fadeIn">
+  <div class="bg-[#121212] border border-[#222] p-5 sm:p-6 rounded-[32px] relative overflow-hidden shadow-xl">
+    <div class="flex items-start justify-between">
+      <div class="flex items-center gap-3.5">
+        <div class="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-600/30 border border-indigo-400/40">
+          ✦
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              Treinador IA
+            </span>
+            <span class="text-xs text-[#888] font-semibold">Layout preparado para Gemini</span>
+          </div>
+          <h1 class="text-xl font-black text-[#F0F0F0] mt-1 tracking-tight">
+            Análise Inteligente de Treino
+          </h1>
+        </div>
+      </div>
+    </div>
+
+    <p class="text-xs text-[#aaa] mt-3 leading-relaxed">
+      Esta versão Ionic Angular mantém o histórico, metas e visual do Coach, mas não executa a análise remota.
+    </p>
+
+    <div class="mt-4 p-3 rounded-2xl bg-[#161616] border border-[#262626] text-[11px] text-[#888]">
+      <strong class="text-[#ccc]">Princípio da IA:</strong>
+      As análises são consultivas. A IA nunca altera automaticamente sua rotina ou histórico.
+    </div>
+  </div>
+
+  <div class="bg-[#121212] border border-[#222] rounded-[32px] p-5 shadow-sm">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="font-extrabold text-sm text-[#F0F0F0]">Seus Objetivos e Preferências</h3>
+      <button type="button" (click)="toggleGoalsEdit()" class="text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors">
+        {{ isEditingGoals() ? 'Cancelar' : 'Editar Objetivos' }}
+      </button>
+    </div>
+
+    @if (isEditingGoals()) {
+      <form [formGroup]="goalsForm" class="space-y-3 pt-2">
+        <div>
+          <label class="block text-xs font-bold text-[#ccc] mb-1">Objetivo Principal</label>
+          <input formControlName="primaryGoal" class="w-full bg-[#181818] border border-[#2a2a2a] rounded-2xl p-3 text-xs text-[#F0F0F0] outline-none" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-[#ccc] mb-1">Dias Semanais Alvo</label>
+            <select formControlName="weeklyTargetDays" class="w-full bg-[#181818] border border-[#2a2a2a] rounded-2xl p-3 text-xs text-[#F0F0F0] outline-none">
+              <option value="3">3 dias por semana</option>
+              <option value="4">4 dias por semana</option>
+              <option value="5">5 dias por semana</option>
+              <option value="6">6 dias por semana</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-[#ccc] mb-1">Meses de Prática</label>
+            <input type="number" min="0" max="120" formControlName="experienceMonths" class="w-full bg-[#181818] border border-[#2a2a2a] rounded-2xl p-3 text-xs text-[#F0F0F0] outline-none" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-[#ccc] mb-1">Observações ou Dificuldades Pessoais</label>
+          <textarea formControlName="focusNotes" rows="2" class="w-full bg-[#181818] border border-[#2a2a2a] rounded-2xl p-3 text-xs text-[#F0F0F0] outline-none"></textarea>
+        </div>
+        <button type="button" (click)="saveGoals()" class="w-full py-3 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs">
+          Salvar Objetivos
+        </button>
+      </form>
+    } @else {
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+        <div class="bg-[#181818] p-3.5 rounded-2xl border border-[#262626]">
+          <span class="text-[10px] text-[#888] block font-bold uppercase tracking-wider">Objetivo</span>
+          <p class="font-bold text-[#F0F0F0] mt-0.5">{{ store.userGoals().primaryGoal }}</p>
+        </div>
+        <div class="bg-[#181818] p-3.5 rounded-2xl border border-[#262626]">
+          <span class="text-[10px] text-[#888] block font-bold uppercase tracking-wider">Frequência</span>
+          <p class="font-bold text-[#F0F0F0] mt-0.5">{{ store.userGoals().weeklyTargetDays }}x por semana</p>
+        </div>
+        <div class="bg-[#181818] p-3.5 rounded-2xl border border-[#262626]">
+          <span class="text-[10px] text-[#888] block font-bold uppercase tracking-wider">Nível & Histórico</span>
+          <p class="font-bold text-[#F0F0F0] mt-0.5">{{ store.currentLevelInfo().name }} ({{ store.sessions().length }} treinos)</p>
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="text-center">
+    <button
+      id="request-ai-analysis-btn"
+      type="button"
+      [disabled]="isAnalyzing()"
+      (click)="requestAnalysis()"
+      class="w-full py-4 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white font-black text-sm flex items-center justify-center gap-2 shadow-xl shadow-indigo-600/30 transition-all disabled:opacity-50 border border-indigo-400/30"
+    >
+      {{ isAnalyzing() ? 'Verificando serviço de IA...' : 'Solicitar Análise de Treinamento com IA' }}
+    </button>
+  </div>
+
+  @if (isAnalyzing()) {
+    <div class="bg-[#121212] border border-indigo-500/20 rounded-[32px] p-5 shadow-sm animate-pulse">
+      <div class="flex items-center justify-between gap-3">
+        <div>
+          <h3 class="font-extrabold text-sm text-[#F0F0F0]">Preparando diagnóstico</h3>
+          <p class="text-xs text-[#888] mt-1">
+            O layout e o histórico estão prontos, mas a chamada remota está desativada nesta versão.
+          </p>
+        </div>
+        <div class="w-10 h-10 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+          ✦
+        </div>
+      </div>
+
+      <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2">
+        @for (message of analysisLoadingMessages; track message) {
+          <div class="bg-[#181818] border border-[#262626] rounded-2xl px-3 py-2 text-[11px] text-[#aaa]">
+            {{ message }}
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="p-4 bg-rose-500/10 border border-rose-500/30 text-rose-400 rounded-2xl text-xs">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  @if (analyses().length > 0) {
+    <div class="bg-[#121212] border border-[#222] rounded-[32px] p-5 shadow-sm">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-extrabold text-sm text-[#F0F0F0]">Análises Salvas Localmente</h3>
+        <span class="text-[10px] font-mono text-[#888]">{{ analyses().length }} relatórios</span>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+        @for (analysis of analyses(); track analysis.id) {
+          <button
+            type="button"
+            (click)="selectAnalysis(analysis)"
+            [class]="activeAnalysis()?.id === analysis.id
+              ? 'text-left bg-indigo-500/10 border border-indigo-500/30 rounded-2xl p-3 transition-all'
+              : 'text-left bg-[#181818] border border-[#262626] rounded-2xl p-3 transition-all hover:border-indigo-500/20'"
+          >
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-[11px] font-bold text-[#F0F0F0] truncate">
+                {{ analysis.recommendedFocus || 'Relatório salvo' }}
+              </span>
+              <span class="text-[10px] text-[#888] font-mono shrink-0">
+                {{ formatAnalysisDate(analysis.createdAt) }}
+              </span>
+            </div>
+            <p class="text-[11px] text-[#888] mt-1 line-clamp-2">{{ analysis.summary }}</p>
+          </button>
+        }
+      </div>
+    </div>
+  }
+
+  @if (activeAnalysis(); as analysis) {
+    <div class="bg-[#121212] border border-[#222] rounded-[32px] p-5 sm:p-6 space-y-5 shadow-xl animate-fadeIn">
+      <div class="flex items-center justify-between border-b border-[#222] pb-3">
+        <h3 class="font-extrabold text-sm text-[#F0F0F0]">Relatório de Análise Personalizada</h3>
+        <span class="text-[10px] text-[#888] font-mono">
+          {{ formatAnalysisDate(analysis.createdAt) }}
+        </span>
+      </div>
+
+      <div>
+        <h4 class="text-xs font-black uppercase text-indigo-400 tracking-wider mb-1.5">Diagnóstico do Treinador</h4>
+        <p class="text-xs text-[#ddd] leading-relaxed bg-[#181818] p-4 rounded-2xl border border-[#262626]">
+          {{ analysis.summary }}
+        </p>
+      </div>
+
+      @if (analysis.keyInsights.length > 0) {
+        <div>
+          <h4 class="text-xs font-black uppercase text-indigo-400 tracking-wider mb-2">Pontos de Destaque & Atenção</h4>
+          <ul class="space-y-1.5">
+            @for (insight of analysis.keyInsights; track $index) {
+              <li class="text-xs text-[#ccc] bg-[#181818] p-3 rounded-2xl border border-[#262626]">{{ insight }}</li>
+            }
+          </ul>
+        </div>
+      }
+
+      @if (analysis.suggestedAdjustments.length > 0) {
+        <div>
+          <h4 class="text-xs font-black uppercase text-indigo-400 tracking-wider mb-2">Sugestões Práticas de Ajustes</h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            @for (suggestion of analysis.suggestedAdjustments; track $index) {
+              <div class="bg-[#181818] border border-[#262626] p-3.5 rounded-2xl space-y-1">
+                <div class="flex items-center justify-between gap-2">
+                  <h5 class="font-bold text-xs text-[#F0F0F0]">{{ suggestion.title }}</h5>
+                  <span class="text-[9px] uppercase font-extrabold px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-300 border border-indigo-500/20">
+                    {{ suggestion.category }}
+                  </span>
+                </div>
+                <p class="text-[11px] text-[#888] leading-relaxed">
+                  {{ suggestion.description }}
+                </p>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-[#222]">
+        <div class="bg-[#14162e] border border-indigo-500/40 rounded-2xl p-3.5">
+          <span class="text-[10px] font-extrabold uppercase tracking-wider text-indigo-300 block mb-1">
+            Foco para as Próximas 2 Semanas
+          </span>
+          <p class="text-xs font-medium text-[#d8dcff]">
+            {{ analysis.recommendedFocus }}
+          </p>
+        </div>
+
+        <div class="bg-[#181818] border border-[#262626] rounded-2xl p-3.5">
+          <span class="text-[10px] font-extrabold uppercase tracking-wider text-[#c084fc] block mb-1">
+            Dica de Consistência
+          </span>
+          <p class="text-xs italic text-[#ccc]">"{{ analysis.motivationalTip }}"</p>
+        </div>
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,133 @@
+<div class="space-y-4 animate-fadeIn">
+  <div class="bg-[#121212] border border-[#222] p-5 rounded-[28px] shadow-lg">
+    <div class="flex items-center gap-2 mb-1">
+      <span class="text-[#888] text-[10px] uppercase tracking-[0.2em] font-bold">Evolução & Desempenho</span>
+      <span class="text-indigo-400 text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/20">
+        {{ progress().personalRecords.length }} recordes registrados
+      </span>
+    </div>
+    <h1 class="text-xl font-black text-[#F0F0F0]">Progresso & Recordes Pessoais</h1>
+    <p class="text-xs text-[#888] mt-1">
+      Análise quantitativa do volume total de calistenia executado e seus maiores feitos em cada movimento.
+    </p>
+  </div>
+
+  <div class="bg-[#121212] border border-[#222] rounded-[28px] p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <div class="text-[10px] font-bold uppercase tracking-[0.2em] text-[#888] mb-1">Acesso interno</div>
+      <h2 class="text-sm font-extrabold text-[#F0F0F0]">IA Coach</h2>
+      <p class="text-xs text-[#888] mt-1 max-w-lg">
+        Abra suas metas e análises salvas direto daqui, sem ocupar espaço na navegação inferior.
+      </p>
+    </div>
+    <button
+      type="button"
+      (click)="goToCoach()"
+      class="shrink-0 px-5 py-3 rounded-full bg-[#181818] hover:bg-[#1d1d1d] text-[#F0F0F0] font-bold text-xs inline-flex items-center justify-center gap-2 border border-[#2a2a2a] transition-all active:scale-95"
+    >
+      Abrir IA Coach
+    </button>
+  </div>
+
+  @if (progress().totalWorkouts === 0) {
+    <div class="bg-[#121212] border border-dashed border-[#262626] rounded-[32px] p-8 text-center">
+      <div class="w-14 h-14 rounded-2xl bg-[#181818] border border-[#222] text-[#666] flex items-center justify-center mx-auto mb-3">
+        ↗
+      </div>
+      <h3 class="font-extrabold text-base text-[#F0F0F0]">Nenhum dado de progresso disponível</h3>
+      <p class="text-xs text-[#888] max-w-sm mx-auto mt-1">
+        Conclua treinos para visualizar suas métricas, recordes pessoais e evolução cronológica.
+      </p>
+    </div>
+  } @else {
+
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+    <div class="bg-[#121212] border border-[#222] rounded-[24px] p-4">
+      <div class="text-[10px] font-bold uppercase tracking-wider text-[#888] mb-1">Treinos</div>
+      <div class="text-2xl font-black text-[#F0F0F0] font-mono">{{ progress().totalWorkouts }}</div>
+      <span class="text-[10px] text-[#666] mt-1 font-medium">Treinos concluídos</span>
+    </div>
+    <div class="bg-[#121212] border border-[#222] rounded-[24px] p-4">
+      <div class="text-[10px] font-bold uppercase tracking-wider text-[#888] mb-1">Repetições</div>
+      <div class="text-2xl font-black text-indigo-400 font-mono">{{ progress().totalRepetitions }}</div>
+      <span class="text-[10px] text-[#666] mt-1 font-medium">Volume acumulado</span>
+    </div>
+    <div class="bg-[#121212] border border-[#222] rounded-[24px] p-4">
+      <div class="text-[10px] font-bold uppercase tracking-wider text-[#888] mb-1">Isometria</div>
+      <div class="text-2xl font-black text-[#F0F0F0] font-mono">{{ progress().totalHoldSeconds }}s</div>
+      <span class="text-[10px] text-[#666] mt-1 font-medium">Tempo sob tensão</span>
+    </div>
+    <div class="bg-[#121212] border border-[#222] rounded-[24px] p-4">
+      <div class="text-[10px] font-bold uppercase tracking-wider text-[#888] mb-1">Tempo</div>
+      <div class="text-2xl font-black text-[#F0F0F0] font-mono">~{{ progress().totalMinutes }}m</div>
+      <span class="text-[10px] text-[#666] mt-1 font-medium">Minutos em treino</span>
+    </div>
+  </div>
+
+  <div class="bg-[#121212] border border-[#222] rounded-[32px] p-5 shadow-sm">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="font-extrabold text-sm text-[#F0F0F0]">Recordes Pessoais</h3>
+      <span class="text-[10px] font-bold uppercase tracking-wider text-[#888]">Pico de força</span>
+    </div>
+
+    @if (progress().personalRecords.length === 0) {
+      <p class="text-xs text-[#888] text-center py-4">
+        Nenhum exercício com repetições registradas ainda. Conclua seu primeiro treino para desbloquear seus recordes!
+      </p>
+    } @else {
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+        @for (record of progress().personalRecords; track record.exerciseId) {
+          <div class="bg-[#181818] border border-[#262626] rounded-2xl p-3.5 flex items-center justify-between hover:border-[#333] transition-colors">
+            <div>
+              <h4 class="font-bold text-[#F0F0F0] text-xs">{{ record.exerciseName }}</h4>
+              <span class="text-[10px] text-[#888]">{{ record.sessionsCount }} {{ record.sessionsCount === 1 ? 'sessão registrada' : 'sessões registradas' }}</span>
+            </div>
+            <div class="text-right">
+              <span class="text-sm font-black text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-1 rounded-full font-mono">
+                {{ record.value }}
+              </span>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <div class="bg-[#121212] border border-[#222] rounded-[32px] p-5 shadow-sm">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="font-extrabold text-sm text-[#F0F0F0]">Evolução Série a Série ao Longo do Tempo</h3>
+    </div>
+
+    @if (progress().timeline.length === 0) {
+      <p class="text-xs text-[#888] text-center py-4">
+        Registre suas repetições durante os treinos para acompanhar o histórico de evolução aqui.
+      </p>
+    } @else {
+      <div class="space-y-3">
+        @for (entry of progress().timeline; track entry.exerciseId) {
+          <div class="bg-[#161616] border border-[#262626] rounded-2xl p-3.5 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-xs text-[#F0F0F0]">{{ entry.exerciseName }}</span>
+              <span class="text-[10px] text-[#888] font-mono">
+                {{ entry.items.length }} {{ entry.items.length === 1 ? 'sessão' : 'sessões' }}
+              </span>
+            </div>
+
+            <div class="space-y-1.5 pt-1">
+              @for (item of entry.items; track $index) {
+                <div class="flex items-center justify-between text-xs bg-[#101010] px-3 py-2 rounded-xl border border-[#202020]">
+                  <div class="flex items-center gap-2">
+                    <span class="text-[10px] font-bold text-[#888] w-12 font-mono">{{ item.date }}</span>
+                    <span class="font-black text-indigo-400 font-mono">{{ item.setsReps }}</span>
+                  </div>
+                  <span class="text-[10px] text-[#888] font-medium font-mono">Vol: {{ item.totalVolume }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+  }
+</div>

@@ -1,0 +1,521 @@
+<div class="space-y-4 animate-fadeIn">
+  <app-level-selector
+    [levels]="store.levels()"
+    [currentLevelId]="store.currentLevelId()"
+    (selectLevel)="handleSelectLevel($event)"
+  ></app-level-selector>
+
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#121212] border border-[#222] p-5 rounded-[28px] shadow-lg">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <span class="text-[#888] text-[10px] uppercase tracking-[0.2em] font-bold">Grade Semanal</span>
+        <span class="text-indigo-400 text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/20">
+          Nível {{ currentLevel().order }} • {{ currentLevel().badge }}
+        </span>
+      </div>
+      <h1 class="text-lg font-black text-[#F0F0F0] tracking-tight">
+        Rotina de Treinos — {{ currentLevel().name }}
+      </h1>
+      <p class="text-xs text-[#888] mt-0.5">{{ currentLevel().description }}</p>
+    </div>
+
+    <button
+      id="edit-schedule-btn"
+      (click)="openScheduleEditor()"
+      class="self-start sm:self-auto flex items-center gap-2 px-4 py-2 bg-[#181818] hover:bg-[#222] border border-[#262626] hover:border-indigo-500/40 rounded-full text-xs font-bold text-[#F0F0F0] hover:text-indigo-300 transition-all shadow-sm"
+    >
+      <svg class="w-3.5 h-3.5 text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M12 20h9"></path>
+        <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
+      </svg>
+      <span>Personalizar Grade</span>
+    </button>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    @for (day of store.schedule(); track day.id) {
+      @if (day.isRestDay || !day.workoutId || !workoutsMap()[day.workoutId]) {
+        <div
+          [id]="'day-card-' + day.dayNumber"
+          class="bg-[#121212] border border-[#1e1e1e] rounded-[32px] p-5 flex flex-col justify-between opacity-80 hover:opacity-100 transition-all"
+        >
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-bold text-[#888]">
+                Dia {{ day.dayNumber }} • {{ day.dayOfWeek || ('Dia ' + day.dayNumber) }}
+              </span>
+              <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#1c1c1c] text-[#888] border border-[#282828] flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-[#666]"></span>
+                Descanso
+              </span>
+            </div>
+
+            <h3 class="font-bold text-sm text-[#888] mb-1">Descanso / Recuperação</h3>
+            <p class="text-xs text-[#666] leading-relaxed">
+              {{ day.notes || 'Dia livre para descanso muscular e recuperação articular.' }}
+            </p>
+          </div>
+
+          <div class="pt-4 mt-4 border-t border-[#1a1a1a]">
+            <span class="text-[11px] text-[#555] italic">Recuperação ativa recomendada</span>
+          </div>
+        </div>
+      } @else {
+        <div
+          [id]="'day-card-' + day.dayNumber"
+          class="bg-[#121212] border border-[#222] hover:border-indigo-500/40 rounded-[32px] p-5 flex flex-col justify-between transition-all group shadow-sm"
+        >
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-bold text-[#bbb]">
+                Dia {{ day.dayNumber }} • {{ day.dayOfWeek || ('Dia ' + day.dayNumber) }}
+              </span>
+
+              <span class="text-xs text-[#888] flex items-center gap-1 font-mono font-medium">
+                <svg class="w-3 h-3 text-[#777]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <circle cx="12" cy="12" r="9"></circle>
+                  <path d="M12 7v5l3 3"></path>
+                </svg>
+                ~{{ workoutsMap()[day.workoutId].estimatedMinutes }} min
+              </span>
+            </div>
+
+            <h3 class="font-black text-base text-[#F0F0F0] mb-1 tracking-tight group-hover:text-indigo-300 transition-colors">
+              {{ workoutsMap()[day.workoutId].name }}
+            </h3>
+            <p class="text-xs text-[#888] line-clamp-2 mb-3.5 leading-relaxed">
+              {{ workoutsMap()[day.workoutId].description }}
+            </p>
+
+            <div class="flex flex-wrap gap-1.5 mb-5">
+              @for (workoutExercise of workoutsMap()[day.workoutId].exercises.slice(0, 3); track workoutExercise.id) {
+                <span class="text-[10px] font-medium bg-[#181818] text-[#bbb] px-2.5 py-1 rounded-lg border border-[#262626]">
+                  {{ getExerciseName(workoutExercise.exerciseId) }}
+                  ({{ workoutExercise.sets }}x{{ workoutExercise.targetRepetitions ? workoutExercise.targetRepetitions + 'r' : workoutExercise.targetDuration + 's' }})
+                </span>
+              }
+              @if (workoutsMap()[day.workoutId].exercises.length > 3) {
+                <span class="text-[10px] font-bold text-indigo-400 bg-indigo-500/10 px-2 py-1 rounded-lg border border-indigo-500/20">
+                  +{{ workoutsMap()[day.workoutId].exercises.length - 3 }}
+                </span>
+              }
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2.5 pt-3 border-t border-[#222]">
+            <button
+              type="button"
+              (click)="openWorkoutDetail(workoutsMap()[day.workoutId])"
+              class="flex-1 py-2.5 px-3 rounded-full bg-[#181818] hover:bg-[#202020] border border-[#262626] text-[#ccc] text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
+            >
+              Ver Detalhes
+            </button>
+            <button
+              type="button"
+              (click)="openWorkoutEditor(workoutsMap()[day.workoutId])"
+              class="p-2.5 rounded-full bg-[#181818] hover:bg-[#202020] border border-[#262626] text-[#888] hover:text-indigo-300 transition-colors"
+              title="Editar exercícios deste treino"
+            >
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M12 20h9"></path>
+                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
+              </svg>
+            </button>
+            <button
+              type="button"
+              (click)="startWorkout(workoutsMap()[day.workoutId])"
+              class="flex-1 py-2.5 px-3 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black flex items-center justify-center gap-1.5 shadow-lg shadow-indigo-600/30 transition-all active:scale-95 border border-indigo-400/30"
+            >
+              Iniciar
+            </button>
+          </div>
+        </div>
+      }
+    }
+  </div>
+</div>
+
+<ion-modal
+  [isOpen]="selectedWorkoutForDetail() !== null"
+  cssClass="workout-modal"
+  (didDismiss)="closeWorkoutDetail()"
+>
+  <ng-template>
+    @if (selectedWorkoutForDetail(); as workout) {
+      <div class="p-5 bg-[#121212] text-[#F0F0F0] max-h-[90vh] overflow-y-auto">
+        <div class="flex items-start justify-between gap-4 pb-4 border-b border-[#222]">
+          <div>
+            <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              Nível {{ currentLevel().order }} • {{ currentLevel().badge }}
+            </span>
+            <h3 class="font-black text-lg mt-2">{{ workout.name }}</h3>
+            <p class="text-xs text-[#888] mt-1">{{ workout.description }}</p>
+          </div>
+          <button (click)="closeWorkoutDetail()" class="text-[#888] hover:text-white text-sm font-bold">Fechar</button>
+        </div>
+
+        <div class="space-y-3 mt-4">
+          @for (item of workout.exercises; track item.id) {
+            @if (getExerciseById(item.exerciseId); as exercise) {
+              <div class="bg-[#161616] border border-[#262626] rounded-2xl p-4 space-y-3">
+                <div class="flex items-start justify-between gap-3">
+                  <div>
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-[#888]">Ordem {{ item.order }}</div>
+                    <div class="flex items-center gap-2 mt-1">
+                      <h4 class="font-bold text-sm text-[#F0F0F0]">{{ exercise.name }}</h4>
+                      <button
+                        type="button"
+                        (click)="openEditExercise(exercise)"
+                        class="text-[#666] hover:text-indigo-400 p-0.5 transition-colors"
+                        title="Editar vídeo, foto e detalhes deste exercício"
+                      >
+                        <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                          <path d="M12 20h9"></path>
+                          <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
+                        </svg>
+                      </button>
+                    </div>
+                    <p class="text-[11px] text-[#888] mt-1">{{ exercise.muscleGroup }}</p>
+                  </div>
+                  <span class="text-[10px] font-bold px-2 py-1 rounded-full bg-[#1c1c1c] border border-[#262626] text-[#ccc]">
+                    {{ item.sets }} séries
+                  </span>
+                </div>
+
+                <div class="text-xs text-[#bbb]">
+                  Meta:
+                  {{ item.targetRepetitions ? item.targetRepetitions + ' repetições' : item.targetDuration + ' segundos' }}
+                  • Descanso {{ item.restDuration }}s
+                </div>
+
+                @if (exercise.videoUrl || exercise.imageUrl) {
+                  <app-exercise-media-viewer
+                    [videoUrl]="exercise.videoUrl"
+                    [imageUrl]="exercise.imageUrl"
+                    [exerciseName]="exercise.name"
+                    [collapsible]="true"
+                    [defaultCollapsed]="true"
+                  ></app-exercise-media-viewer>
+                }
+              </div>
+            }
+          }
+        </div>
+
+        <div class="flex gap-2.5 mt-5">
+          <button
+            type="button"
+            (click)="closeWorkoutDetail()"
+            class="flex-1 py-3 rounded-full border border-[#262626] text-[#ccc] font-semibold text-xs hover:bg-[#181818]"
+          >
+            Fechar
+          </button>
+          <button
+            type="button"
+            (click)="openWorkoutEditor(workout)"
+            class="flex-1 py-3 rounded-full bg-[#181818] border border-[#262626] text-[#F0F0F0] font-bold text-xs"
+          >
+            Editar Treino
+          </button>
+          <button
+            type="button"
+            (click)="startWorkout(workout)"
+            class="flex-1 py-3 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs"
+          >
+            Iniciar Agora
+          </button>
+        </div>
+      </div>
+    }
+  </ng-template>
+</ion-modal>
+
+<ion-modal
+  [isOpen]="editingWorkout() !== null"
+  cssClass="editor-modal"
+  (didDismiss)="closeWorkoutEditor()"
+>
+  <ng-template>
+    @if (editingWorkout(); as workout) {
+      <div class="p-5 bg-[#121212] text-[#F0F0F0] max-h-[90vh] overflow-y-auto">
+        <div class="flex items-start justify-between gap-4 pb-4 border-b border-[#222]">
+          <div>
+            <h3 class="font-black text-lg">Editar Treino</h3>
+            <p class="text-xs text-[#888] mt-1">{{ workout.name }}</p>
+          </div>
+          <button (click)="closeWorkoutEditor()" class="text-[#888] hover:text-white text-sm font-bold">Fechar</button>
+        </div>
+
+        <form [formGroup]="workoutForm" class="space-y-4 mt-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="sm:col-span-2">
+              <label class="text-xs font-bold text-[#ccc] block mb-1">Nome da Rotina</label>
+              <input formControlName="name" class="w-full rounded-2xl p-3 text-xs text-[#F0F0F0] bento-input outline-none" />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="text-xs font-bold text-[#ccc] block mb-1">Descrição</label>
+              <textarea formControlName="description" rows="2" class="w-full rounded-2xl p-3 text-xs text-[#F0F0F0] bento-input outline-none"></textarea>
+            </div>
+            <div>
+              <label class="text-xs font-bold text-[#ccc] block mb-1">Duração Estimada</label>
+              <input type="number" formControlName="estimatedMinutes" class="w-full rounded-2xl p-3 text-xs text-[#F0F0F0] bento-input outline-none" />
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <h4 class="text-sm font-extrabold">Exercícios do Treino</h4>
+              <div class="flex items-center gap-2">
+                <button type="button" (click)="openCreateExercise()" class="text-xs font-bold px-3 py-2 rounded-full bg-[#181818] border border-[#262626] text-[#F0F0F0]">
+                  Criar Novo Exercício
+                </button>
+                <button type="button" (click)="addExerciseToWorkout()" class="text-xs font-bold px-3 py-2 rounded-full bg-indigo-600 text-white">
+                  Adicionar Exercício
+                </button>
+              </div>
+            </div>
+
+            <div formArrayName="exercises" class="space-y-3">
+              @for (group of workoutItems.controls; track $index) {
+                <div [formGroupName]="$index" class="bg-[#181818] border border-[#262626] rounded-2xl p-4 space-y-3">
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="sm:col-span-2">
+                      <label class="text-[11px] font-bold text-[#ccc] block mb-1">Exercício</label>
+                      <div class="flex items-center gap-2">
+                        <select formControlName="exerciseId" class="w-full rounded-xl p-3 text-xs text-[#F0F0F0] bento-input outline-none">
+                          @for (exercise of availableExercises(); track exercise.id) {
+                            <option [value]="exercise.id">{{ exercise.name }}</option>
+                          }
+                        </select>
+                        @if (getExerciseById(group.get('exerciseId')?.value); as selectedExercise) {
+                          <button
+                            type="button"
+                            (click)="openEditExercise(selectedExercise)"
+                            class="p-3 rounded-xl bg-[#1f1f1f] border border-[#2a2a2a] text-[#888] hover:text-indigo-300 hover:bg-[#262626] transition-colors"
+                            title="Editar detalhes, vídeo ou imagem deste exercício"
+                          >
+                            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                              <path d="M12 20h9"></path>
+                              <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
+                            </svg>
+                          </button>
+                        }
+                      </div>
+                    </div>
+                    <div>
+                      <label class="text-[11px] font-bold text-[#ccc] block mb-1">Séries</label>
+                      <input type="number" formControlName="sets" class="w-full rounded-xl p-3 text-xs text-[#F0F0F0] bento-input outline-none" />
+                    </div>
+                    <div>
+                      <label class="text-[11px] font-bold text-[#ccc] block mb-1">
+                        {{ workoutItemIsTimeBased($index) ? 'Meta (segundos)' : 'Meta (repetições)' }}
+                      </label>
+                      @if (workoutItemIsTimeBased($index)) {
+                        <input type="number" formControlName="targetDuration" class="w-full rounded-xl p-3 text-xs text-[#F0F0F0] bento-input outline-none" />
+                      } @else {
+                        <input type="number" formControlName="targetRepetitions" class="w-full rounded-xl p-3 text-xs text-[#F0F0F0] bento-input outline-none" />
+                      }
+                    </div>
+                    <div>
+                      <label class="text-[11px] font-bold text-[#ccc] block mb-1">Descanso</label>
+                      <select formControlName="restDuration" class="w-full rounded-xl p-3 text-xs text-[#F0F0F0] bento-input outline-none">
+                        @for (rest of [30, 60, 90, 120, 180]; track rest) {
+                          <option [value]="rest">{{ rest }}s</option>
+                        }
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="flex gap-2 justify-end">
+                    <button type="button" (click)="moveWorkoutItem($index, 'up')" class="px-3 py-2 rounded-xl bg-[#202020] text-xs font-bold">Subir</button>
+                    <button type="button" (click)="moveWorkoutItem($index, 'down')" class="px-3 py-2 rounded-xl bg-[#202020] text-xs font-bold">Descer</button>
+                    <button type="button" (click)="removeWorkoutItem($index)" class="px-3 py-2 rounded-xl bg-rose-500/10 text-rose-300 text-xs font-bold">Remover</button>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <div class="flex gap-2.5 pt-2">
+            <button type="button" (click)="closeWorkoutEditor()" class="flex-1 py-3 rounded-full border border-[#262626] text-[#ccc] font-semibold text-xs hover:bg-[#181818]">
+              Cancelar
+            </button>
+            <button type="button" (click)="saveWorkout()" class="flex-1 py-3 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs">
+              Salvar Treino
+            </button>
+          </div>
+        </form>
+      </div>
+    }
+  </ng-template>
+</ion-modal>
+
+<ion-modal
+  [isOpen]="isCreatingExercise() || editingExercise() !== null"
+  cssClass="editor-modal"
+  (didDismiss)="closeExerciseEditor()"
+>
+  <ng-template>
+    <div class="p-5 bg-[#121212] text-[#F0F0F0] max-h-[90vh] overflow-y-auto">
+      <div class="flex items-start justify-between gap-4 pb-4 border-b border-[#222]">
+        <div>
+          <h3 class="font-black text-lg">
+            {{ editingExercise() ? 'Editar Exercício' : 'Novo Exercício' }}
+          </h3>
+          <p class="text-xs text-[#888] mt-1">
+            Cadastre movimentos, dicas técnicas e mídias tutoriais sem sair da grade.
+          </p>
+        </div>
+        <button (click)="closeExerciseEditor()" class="text-[#888] hover:text-white text-sm font-bold">Fechar</button>
+      </div>
+
+      <form [formGroup]="exerciseForm" class="space-y-4 mt-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="sm:col-span-2">
+            <label class="text-xs font-bold text-[#ccc] block mb-1">Nome do Exercício</label>
+            <input formControlName="name" class="w-full rounded-2xl p-3 text-xs text-[#F0F0F0] bento-input outline-none" />
+          </div>
+          <div class="sm:col-span-2">
+            <label class="text-xs font-bold text-[#ccc] block mb-1">Descrição</label>
+            <textarea formControlName="description" rows="2" class="w-full rounded-2xl p-3 text-xs text-[#F0F0F0] bento-input outline-none"></textarea>
+          </div>
+          <div>
+            <label class="text-xs font-bold text-[#ccc] block mb-1">Tipo</label>
+            <select formControlName="type" class="w-full rounded-2xl p-3 text-xs text-[#F0F0F0] bento-input outline-none">
+              <option value="REPETITIONS">Repetições</option>
+              <option value="TIME">Tempo</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs font-bold text-[#ccc] block mb-1">Categoria</label>
+            <select formControlName="category" class="w-full rounded-2xl p-3 text-xs text-[#F0F0F0] bento-input outline-none">
+              <option value="push">push</option>
+              <option value="pull">pull</option>
+              <option value="legs_core">legs_core</option>
+              <option value="arms">arms</option>
+              <option value="skills">skills</option>
+              <option value="fullbody">fullbody</option>
+            </select>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="text-xs font-bold text-[#ccc] block mb-1">Músculos Trabalhados</label>
+            <input formControlName="muscleGroup" class="w-full rounded-2xl p-3 text-xs text-[#F0F0F0] bento-input outline-none" />
+          </div>
+          <div class="sm:col-span-2">
+            <label class="text-xs font-bold text-[#ccc] block mb-1">Instruções</label>
+            <textarea formControlName="instruction" rows="2" class="w-full rounded-2xl p-3 text-xs text-[#F0F0F0] bento-input outline-none"></textarea>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="text-xs font-bold text-[#ccc] block mb-1">Dicas Rápidas</label>
+            <textarea formControlName="tipsText" rows="2" class="w-full rounded-2xl p-3 text-xs text-[#F0F0F0] bento-input outline-none" placeholder="Uma dica por linha"></textarea>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="text-xs font-bold text-[#ccc] block mb-1">URL do Vídeo</label>
+            <input formControlName="videoUrl" class="w-full rounded-2xl p-3 text-xs text-[#F0F0F0] bento-input outline-none" />
+          </div>
+          <div class="sm:col-span-2">
+            <label class="text-xs font-bold text-[#ccc] block mb-1">URL da Imagem</label>
+            <input formControlName="imageUrl" class="w-full rounded-2xl p-3 text-xs text-[#F0F0F0] bento-input outline-none" />
+          </div>
+        </div>
+
+        @if (exerciseForm.value.videoUrl || exerciseForm.value.imageUrl) {
+          <div class="space-y-2">
+            <h4 class="text-sm font-extrabold">Pré-visualização</h4>
+            <app-exercise-media-viewer
+              [videoUrl]="exerciseForm.value.videoUrl || undefined"
+              [imageUrl]="exerciseForm.value.imageUrl || undefined"
+              [exerciseName]="exerciseForm.value.name || 'Exercício'"
+            ></app-exercise-media-viewer>
+          </div>
+        }
+
+        <div class="flex gap-2.5 pt-2">
+          @if (editingExercise()) {
+            <button type="button" (click)="deleteExercise()" class="py-3 px-4 rounded-full border border-rose-500/30 text-rose-300 font-bold text-xs">
+              Excluir
+            </button>
+          }
+          <button type="button" (click)="closeExerciseEditor()" class="flex-1 py-3 rounded-full border border-[#262626] text-[#ccc] font-semibold text-xs hover:bg-[#181818]">
+            Cancelar
+          </button>
+          <button type="button" (click)="saveExercise()" class="flex-1 py-3 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs">
+            Salvar Exercício
+          </button>
+        </div>
+      </form>
+    </div>
+  </ng-template>
+</ion-modal>
+
+<ion-modal
+  [isOpen]="isScheduleEditorOpen()"
+  cssClass="editor-modal"
+  (didDismiss)="closeScheduleEditor()"
+>
+  <ng-template>
+    <div class="p-5 bg-[#121212] text-[#F0F0F0] max-h-[90vh] overflow-y-auto">
+      <div class="flex items-start justify-between gap-4 pb-4 border-b border-[#222]">
+        <div>
+          <h3 class="font-black text-lg">Personalizar Grade</h3>
+          <p class="text-xs text-[#888] mt-1">Nível {{ currentLevel().name }}</p>
+        </div>
+        <button (click)="closeScheduleEditor()" class="text-[#888] hover:text-white text-sm font-bold">Fechar</button>
+      </div>
+
+      <form [formGroup]="scheduleForm" class="space-y-4 mt-4">
+        <div formArrayName="days" class="space-y-3">
+          @for (group of scheduleDays.controls; track $index) {
+            <div [formGroupName]="$index" class="bg-[#181818] border border-[#262626] rounded-2xl p-4 space-y-3">
+              <div class="flex items-center justify-between">
+                <h4 class="font-bold text-sm">Dia {{ $index + 1 }}</h4>
+                <button type="button" (click)="removeScheduleDay($index)" class="text-xs font-bold text-rose-300">Excluir</button>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="text-[11px] font-bold text-[#ccc] block mb-1">Rótulo do Dia</label>
+                  <input formControlName="dayOfWeek" class="w-full rounded-xl p-3 text-xs text-[#F0F0F0] bento-input outline-none" />
+                </div>
+                <div>
+                  <label class="text-[11px] font-bold text-[#ccc] block mb-1">Treino</label>
+                  <select formControlName="workoutId" class="w-full rounded-xl p-3 text-xs text-[#F0F0F0] bento-input outline-none" [disabled]="group.get('isRestDay')?.value">
+                    @for (workout of availableWorkouts(); track workout.id) {
+                      <option [value]="workout.id">{{ workout.name }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="sm:col-span-2">
+                  <label class="text-[11px] font-bold text-[#ccc] block mb-1">Observações</label>
+                  <textarea formControlName="notes" rows="2" class="w-full rounded-xl p-3 text-xs text-[#F0F0F0] bento-input outline-none"></textarea>
+                </div>
+              </div>
+
+              <button type="button" (click)="toggleRestDay($index)" class="px-3 py-2 rounded-full text-xs font-bold border border-[#262626] bg-[#202020]">
+                {{ group.get('isRestDay')?.value ? 'Transformar em treino' : 'Marcar como descanso' }}
+              </button>
+            </div>
+          }
+        </div>
+
+        <div class="flex flex-wrap gap-2">
+          <button type="button" (click)="addScheduleDay()" class="px-4 py-3 rounded-full bg-[#181818] border border-dashed border-[#333] text-xs font-bold">
+            Adicionar Dia
+          </button>
+          <button type="button" (click)="resetSchedule()" class="px-4 py-3 rounded-full bg-[#181818] border border-[#262626] text-xs font-bold">
+            Restaurar Padrão
+          </button>
+        </div>
+
+        <div class="flex gap-2.5 pt-2">
+          <button type="button" (click)="closeScheduleEditor()" class="flex-1 py-3 rounded-full border border-[#262626] text-[#ccc] font-semibold text-xs hover:bg-[#181818]">
+            Cancelar
+          </button>
+          <button type="button" (click)="saveSchedule()" class="flex-1 py-3 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs">
+            Salvar Grade
+          </button>
+        </div>
+      </form>
+    </div>
+  </ng-template>
+</ion-modal>

@@ -1,0 +1,458 @@
+@if (!canShowWorkout()) {
+  <div class="min-h-screen bg-[#080808] text-[#F0F0F0] flex flex-col items-center justify-center p-6">
+    <div class="w-12 h-12 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-4"></div>
+    <p class="text-xs font-bold text-[#888] tracking-widest uppercase">Preparando treino...</p>
+  </div>
+} @else if (workout(); as currentWorkout) {
+  <div class="fixed inset-0 z-40 bg-[#080808] text-[#F0F0F0] flex flex-col justify-between overflow-y-auto animate-fadeIn">
+    <div class="sticky top-0 z-10 bg-[#080808]/90 backdrop-blur-xl border-b border-[#222] px-4 py-3.5">
+      <div class="max-w-xl mx-auto flex items-center justify-between gap-3">
+        <button
+          id="quit-workout-btn"
+          type="button"
+          (click)="showExitConfirm.set(true)"
+          class="flex items-center gap-1.5 text-xs font-bold text-[#888] hover:text-rose-400 py-1.5 px-3 rounded-full hover:bg-[#161616] border border-transparent hover:border-[#262626] transition-all"
+        >
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M18 6 6 18"></path>
+            <path d="m6 6 12 12"></path>
+          </svg>
+          <span>Encerrar</span>
+        </button>
+
+        <div class="text-center min-w-0">
+          <h2 class="text-xs font-black uppercase text-indigo-400 tracking-wider truncate">
+            {{ currentWorkout.name }}
+          </h2>
+          <div class="text-xs text-[#888] flex items-center justify-center gap-1.5 font-semibold font-mono">
+            <svg class="w-3.5 h-3.5 text-[#666]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <circle cx="12" cy="12" r="9"></circle>
+              <path d="M12 7v5l3 3"></path>
+            </svg>
+            <span>{{ formatTime(session.totalWorkoutDuration()) }}</span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button
+            id="toggle-timer-mode-btn"
+            type="button"
+            (click)="toggleTimerMode()"
+            [class]="session.timerMode() === 'AUTO_WORK_REST'
+              ? 'text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full border transition-all bg-indigo-950/70 text-indigo-300 border-indigo-500/50 ring-1 ring-indigo-500/30'
+              : 'text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full border transition-all bg-[#161616] text-[#888] border-[#262626]'"
+            title="Alternar entre modo descanso manual e modo execução automática WORK/REST"
+          >
+            {{ session.timerMode() === 'AUTO_WORK_REST' ? 'Modo Auto' : 'Manual' }}
+          </button>
+
+          <button
+            id="pause-workout-btn"
+            type="button"
+            (click)="togglePause()"
+            [class]="session.phase() === 'PAUSED'
+              ? 'p-2 rounded-full border transition-all bg-indigo-600 text-white border-indigo-400 shadow-lg shadow-indigo-500/30'
+              : 'p-2 rounded-full border transition-all bg-[#161616] text-[#ccc] border-[#262626] hover:bg-[#202020]'"
+            [title]="session.phase() === 'PAUSED' ? 'Retomar treino' : 'Pausar treino'"
+          >
+            @if (session.phase() === 'PAUSED') {
+              <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="m8 5 11 7-11 7V5Z"></path>
+              </svg>
+            } @else {
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <rect x="6" y="5" width="4" height="14" rx="1"></rect>
+                <rect x="14" y="5" width="4" height="14" rx="1"></rect>
+              </svg>
+            }
+          </button>
+        </div>
+      </div>
+
+      <div class="max-w-xl mx-auto mt-2.5">
+        <div class="flex justify-between text-[10px] text-[#888] font-bold mb-1 uppercase tracking-wider">
+          <span>Progresso da Sessão</span>
+          <span class="font-mono text-indigo-400">
+            {{ completedSetsCount() }}/{{ totalSetsInWorkout() }} séries ({{ progressPercent() }}%)
+          </span>
+        </div>
+        <div class="w-full h-1.5 bg-[#181818] rounded-full overflow-hidden border border-[#222]">
+          <div
+            class="h-full bg-indigo-500 transition-all duration-300 rounded-full shadow-[0_0_8px_rgba(99,102,241,0.6)]"
+            [style.width.%]="progressPercent()"
+          ></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex-1 max-w-xl mx-auto w-full p-4 flex flex-col justify-between">
+      @if (session.phase() === 'PAUSED') {
+        <div class="bg-indigo-950/40 border border-indigo-500/40 text-indigo-300 px-4 py-2.5 rounded-2xl text-center text-xs font-bold animate-pulse mb-3">
+          Treino pausado. Toque no botão Play para continuar.
+        </div>
+      }
+
+      @if (currentWorkoutExercise(); as currentExercise) {
+        <div class="text-center mb-3">
+          <div class="inline-flex items-center gap-2 bg-[#121212] border border-[#222] px-3.5 py-1 rounded-full text-xs font-bold text-[#888] mb-2">
+            <span>Exercício {{ session.currentExerciseIndex() + 1 }} de {{ currentWorkout.exercises.length }}</span>
+            <span class="w-1 h-1 rounded-full bg-[#444]"></span>
+            <span class="text-indigo-400 font-extrabold">
+              Série {{ session.currentSetIndex() + 1 }} de {{ currentExercise.sets }}
+            </span>
+          </div>
+
+          <h1 class="text-2xl sm:text-3xl font-black text-[#F0F0F0] tracking-tight">
+            {{ currentExerciseData()?.name || 'Exercício' }}
+          </h1>
+          <div class="flex items-center justify-center gap-2 mt-1 flex-wrap">
+            <p class="text-xs text-[#888] font-medium">{{ currentExerciseData()?.muscleGroup }}</p>
+            @if (currentExerciseData()?.videoUrl || currentExerciseData()?.imageUrl) {
+              <button
+                type="button"
+                (click)="showMediaModal.set(true)"
+                class="text-[11px] font-bold text-indigo-400 hover:text-indigo-300 bg-indigo-950/60 border border-indigo-500/30 px-2.5 py-0.5 rounded-full flex items-center gap-1 transition-all"
+              >
+                <span>Ver Execução Correta</span>
+              </button>
+            }
+          </div>
+        </div>
+
+        @if (session.phase() === 'RESTING') {
+          <div class="bg-[#121212] border border-[#222] rounded-[32px] p-6 text-center shadow-2xl flex flex-col items-center justify-center my-auto animate-scaleUp">
+            <span class="text-[10px] font-extrabold uppercase tracking-[0.2em] text-indigo-400 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 mb-3">
+              Descanso entre Séries
+            </span>
+
+            <div class="relative w-44 h-44 flex items-center justify-center my-2">
+              <svg class="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="44"
+                  class="text-[#181818] stroke-current"
+                  stroke-width="6"
+                  fill="transparent"
+                />
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="44"
+                  class="text-indigo-500 stroke-current transition-all duration-1000"
+                  stroke-width="6"
+                  stroke-dasharray="276"
+                  [attr.stroke-dashoffset]="276 - (276 * session.timeLeft()) / (session.restDuration() || 1)"
+                  stroke-linecap="round"
+                  fill="transparent"
+                />
+              </svg>
+              <div class="absolute inset-0 flex flex-col items-center justify-center">
+                <span class="text-4xl font-black text-[#F0F0F0] tracking-tight font-mono">
+                  {{ formatTime(session.timeLeft()) }}
+                </span>
+                <span class="text-[10px] font-bold text-[#888] uppercase tracking-wider mt-0.5">
+                  Restante
+                </span>
+              </div>
+            </div>
+
+            <div class="w-full mt-4 space-y-2">
+              <div class="flex items-center justify-center gap-2">
+                <button
+                  type="button"
+                  (click)="adjustRest(-15)"
+                  class="px-3.5 py-1.5 rounded-full bg-[#181818] hover:bg-[#222] text-[#bbb] text-xs font-bold border border-[#262626] transition-colors"
+                >
+                  -15s
+                </button>
+                <button
+                  type="button"
+                  (click)="adjustRest(15)"
+                  class="px-3.5 py-1.5 rounded-full bg-[#181818] hover:bg-[#222] text-[#bbb] text-xs font-bold border border-[#262626] transition-colors"
+                >
+                  +15s
+                </button>
+                <button
+                  type="button"
+                  (click)="adjustRest(30)"
+                  class="px-3.5 py-1.5 rounded-full bg-[#181818] hover:bg-[#222] text-[#bbb] text-xs font-bold border border-[#262626] transition-colors"
+                >
+                  +30s
+                </button>
+              </div>
+
+              <div class="flex flex-wrap justify-center gap-1.5 pt-1">
+                @for (sec of restPresetValues; track sec) {
+                  <button
+                    type="button"
+                    (click)="setExactRest(sec)"
+                    [class]="session.restDuration() === sec
+                      ? 'text-[10px] font-bold px-3 py-1 rounded-full border transition-colors bg-indigo-600 text-white border-indigo-500'
+                      : 'text-[10px] font-bold px-3 py-1 rounded-full border transition-colors bg-[#161616] text-[#888] border-[#262626] hover:text-[#ccc]'"
+                  >
+                    {{ sec < 60 ? sec + 's' : sec / 60 + 'm' }}
+                  </button>
+                }
+              </div>
+            </div>
+
+            <button
+              id="skip-rest-btn"
+              type="button"
+              (click)="skipRest()"
+              class="mt-5 w-full py-3.5 rounded-full bg-[#181818] hover:bg-[#202020] border border-[#262626] text-[#F0F0F0] font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-sm"
+            >
+              <svg class="w-4 h-4 text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <polygon points="5 4 15 12 5 20 5 4"></polygon>
+                <line x1="19" y1="5" x2="19" y2="19"></line>
+              </svg>
+              Pular Descanso e Iniciar Próxima Série
+            </button>
+
+            @if (currentExerciseData()?.videoUrl || currentExerciseData()?.imageUrl) {
+              <div class="w-full mt-4 text-left">
+                <app-exercise-media-viewer
+                  [videoUrl]="currentExerciseData()?.videoUrl"
+                  [imageUrl]="currentExerciseData()?.imageUrl"
+                  [exerciseName]="currentExerciseData()?.name || 'Exercício'"
+                  [collapsible]="true"
+                  [defaultCollapsed]="true"
+                ></app-exercise-media-viewer>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="bg-[#121212] border border-[#222] rounded-[32px] p-6 shadow-2xl flex flex-col justify-between my-auto">
+            <div class="flex items-center justify-between pb-4 border-b border-[#222] gap-4">
+              <div class="text-left">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-[#888]">Meta Sugerida</span>
+                <div class="text-lg font-black text-indigo-400">
+                  {{
+                    currentExercise.targetRepetitions !== undefined && currentExercise.targetRepetitions !== null
+                      ? currentExercise.targetRepetitions + ' repetições'
+                      : currentExercise.targetDuration + ' segundos'
+                  }}
+                </div>
+              </div>
+
+              @if (isTimeBased()) {
+                <div class="text-right">
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-[#888]">Cronômetro</span>
+                  <div class="text-xl font-black text-[#F0F0F0] font-mono">
+                    {{ formatTime(session.timerMode() === 'AUTO_WORK_REST' ? session.timeLeft() : session.workStopwatch()) }}
+                  </div>
+                </div>
+              }
+            </div>
+
+            @if (currentExerciseData()?.instruction) {
+              <p class="text-xs text-[#aaa] py-2.5 leading-relaxed">
+                {{ currentExerciseData()?.instruction }}
+              </p>
+            }
+
+            @if (currentExerciseData()?.videoUrl || currentExerciseData()?.imageUrl) {
+              <div class="my-2">
+                <app-exercise-media-viewer
+                  [videoUrl]="currentExerciseData()?.videoUrl"
+                  [imageUrl]="currentExerciseData()?.imageUrl"
+                  [exerciseName]="currentExerciseData()?.name || 'Exercício'"
+                  [collapsible]="true"
+                  [defaultCollapsed]="false"
+                ></app-exercise-media-viewer>
+              </div>
+            }
+
+            <div class="bg-[#161616] rounded-2xl p-4 border border-[#262626] mt-2">
+              <div class="flex items-center justify-between gap-2 mb-2">
+                <label class="text-xs font-bold text-[#F0F0F0] flex items-center gap-1.5">
+                  <svg class="w-3.5 h-3.5 text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M6.5 6.5 17.5 17.5"></path>
+                    <path d="M21 21 14 14"></path>
+                    <path d="M3 3 10 10"></path>
+                    <path d="M18 6 6 18"></path>
+                  </svg>
+                  {{ isTimeBased() ? 'Duração Real (segundos)' : 'Repetições Realizadas' }}
+                </label>
+
+                <button
+                  type="button"
+                  id="toggle-skip-input-btn"
+                  (click)="toggleSkipInput()"
+                  [class]="session.skipInputVal()
+                    ? 'text-[10px] font-bold px-2 py-0.5 rounded transition-colors bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
+                    : 'text-[10px] font-bold px-2 py-0.5 rounded transition-colors text-[#888] hover:text-[#ccc] underline'"
+                >
+                  {{ session.skipInputVal() ? 'Sem registro (opcional)' : 'Não registrar reps' }}
+                </button>
+              </div>
+
+              @if (!session.skipInputVal()) {
+                <div>
+                  <div class="flex items-center justify-center gap-4 my-2">
+                    <button
+                      type="button"
+                      id="decrease-rep-btn"
+                      (click)="incrementInput(-1)"
+                      class="w-12 h-12 rounded-2xl bg-[#1c1c1c] hover:bg-[#262626] text-[#F0F0F0] font-black text-xl flex items-center justify-center border border-[#2a2a2a] active:scale-95 transition-all"
+                    >
+                      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path d="M5 12h14"></path>
+                      </svg>
+                    </button>
+
+                    <div class="w-24 text-center">
+                      <span class="text-4xl font-black text-[#F0F0F0] font-mono">{{ session.inputVal() }}</span>
+                      <span class="block text-[10px] uppercase font-bold text-[#888]">
+                        {{ isTimeBased() ? 'Segundos' : 'Reps' }}
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      id="increase-rep-btn"
+                      (click)="incrementInput(1)"
+                      class="w-12 h-12 rounded-2xl bg-[#1c1c1c] hover:bg-[#262626] text-[#F0F0F0] font-black text-xl flex items-center justify-center border border-[#2a2a2a] active:scale-95 transition-all"
+                    >
+                      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path d="M12 5v14"></path>
+                        <path d="M5 12h14"></path>
+                      </svg>
+                    </button>
+                  </div>
+
+                  <div class="flex justify-center gap-1.5 mt-3 flex-wrap">
+                    @for (value of inputPresetValues; track value) {
+                      <button
+                        type="button"
+                        (click)="setInputPreset(value)"
+                        [class]="session.inputVal() === value
+                          ? 'text-[11px] font-bold px-3 py-1 rounded-full border transition-colors bg-indigo-600 text-white border-indigo-500 font-black shadow-sm'
+                          : 'text-[11px] font-bold px-3 py-1 rounded-full border transition-colors bg-[#181818] text-[#888] border-[#262626] hover:text-[#ccc]'"
+                      >
+                        {{ value }}
+                      </button>
+                    }
+                  </div>
+                </div>
+              } @else {
+                <div class="p-3 text-center text-xs text-[#888] bg-[#121212] rounded-xl">
+                  A série será marcada como concluída sem salvar contagem numérica.
+                </div>
+              }
+            </div>
+
+            <button
+              id="complete-set-btn"
+              type="button"
+              (click)="completeSet()"
+              class="mt-5 w-full py-4 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 shadow-xl shadow-indigo-600/30 active:scale-95 transition-all border border-indigo-400/30"
+            >
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                <path d="M20 6 9 17l-5-5"></path>
+              </svg>
+              CONCLUIR SÉRIE
+            </button>
+          </div>
+        }
+
+        <div class="mt-4 bg-[#121212] border border-[#222] rounded-2xl p-3.5 flex items-center justify-between gap-3 text-xs text-[#888]">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="font-bold text-[#aaa] shrink-0">A Seguir:</span>
+            <span
+              class="truncate font-semibold"
+              [class.text-emerald-400]="nextActionLabel() === 'Finalização do treino'"
+              [class.text-indigo-400]="nextActionLabel() !== 'Finalização do treino'"
+            >
+              {{ nextActionLabel() }}
+            </span>
+          </div>
+          <svg class="w-4 h-4 text-[#666] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="m9 18 6-6-6-6"></path>
+          </svg>
+        </div>
+      }
+    </div>
+
+    @if (showMediaModal() && currentExerciseData()) {
+      <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fadeIn">
+        <div class="bg-[#121212] border border-[#262626] rounded-[32px] p-5 max-w-lg w-full shadow-2xl animate-scaleUp">
+          <div class="flex items-center justify-between pb-3 mb-3 border-b border-[#222] gap-3">
+            <div class="min-w-0">
+              <h3 class="font-black text-sm text-[#F0F0F0] truncate">{{ currentExerciseData()?.name }}</h3>
+              <p class="text-[11px] text-[#888]">Técnica e Execução Correta</p>
+            </div>
+            <button
+              type="button"
+              (click)="showMediaModal.set(false)"
+              class="p-1.5 rounded-full text-[#888] hover:text-[#fff] hover:bg-[#202020]"
+            >
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M18 6 6 18"></path>
+                <path d="m6 6 12 12"></path>
+              </svg>
+            </button>
+          </div>
+
+          <app-exercise-media-viewer
+            [videoUrl]="currentExerciseData()?.videoUrl"
+            [imageUrl]="currentExerciseData()?.imageUrl"
+            [exerciseName]="currentExerciseData()?.name || 'Exercício'"
+          ></app-exercise-media-viewer>
+
+          @if (currentExerciseData()?.instruction) {
+            <p class="text-xs text-[#aaa] mt-3 bg-[#181818] p-3 rounded-2xl border border-[#262626]">
+              {{ currentExerciseData()?.instruction }}
+            </p>
+          }
+
+          <button
+            type="button"
+            (click)="showMediaModal.set(false)"
+            class="mt-4 w-full py-2.5 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs"
+          >
+            Voltar ao Treino
+          </button>
+        </div>
+      </div>
+    }
+
+    @if (showExitConfirm()) {
+      <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
+        <div class="bg-[#121212] border border-[#262626] rounded-[32px] p-6 max-w-sm w-full text-center shadow-2xl animate-scaleUp">
+          <div class="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-400 flex items-center justify-center mx-auto mb-3 border border-rose-500/20">
+            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M12 9v4"></path>
+              <path d="M12 17h.01"></path>
+              <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"></path>
+            </svg>
+          </div>
+          <h3 class="font-black text-lg text-[#F0F0F0]">Interromper Treino?</h3>
+          <p class="text-xs text-[#888] mt-1 mb-5">
+            Se você sair agora, o progresso desta sessão em andamento será descartado.
+          </p>
+
+          <div class="flex gap-2.5">
+            <button
+              type="button"
+              id="cancel-quit-btn"
+              (click)="showExitConfirm.set(false)"
+              class="flex-1 py-3 rounded-full border border-[#262626] text-[#ccc] font-semibold text-xs hover:bg-[#181818]"
+            >
+              Continuar
+            </button>
+            <button
+              type="button"
+              id="confirm-quit-btn"
+              (click)="confirmCancelWorkout()"
+              class="flex-1 py-3 rounded-full bg-rose-500 hover:bg-rose-400 text-white font-black text-xs shadow-lg shadow-rose-500/20"
+            >
+              Encerrar
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+}

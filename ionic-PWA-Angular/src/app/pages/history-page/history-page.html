@@ -1,0 +1,152 @@
+<div class="space-y-4 animate-fadeIn">
+  <div class="flex items-center justify-between pb-1">
+    <div>
+      <h1 class="text-xl font-black text-[#F0F0F0]">Histórico de Treinos</h1>
+      <p class="text-xs text-[#888]">
+        Registro detalhado e sincronizado de todas as suas sessões executadas.
+      </p>
+    </div>
+    <span class="text-xs font-bold px-3 py-1 bg-[#121212] border border-[#262626] rounded-full text-[#aaa] font-mono">
+      {{ store.sessions().length }} {{ store.sessions().length === 1 ? 'sessão' : 'sessões' }}
+    </span>
+  </div>
+
+  <div class="bg-[#121212] border border-[#222] rounded-[28px] p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <div class="text-[10px] font-bold uppercase tracking-[0.2em] text-[#888] mb-1">Acesso interno</div>
+      <h2 class="text-sm font-extrabold text-[#F0F0F0]">Biblioteca de Exercícios</h2>
+      <p class="text-xs text-[#888] mt-1 max-w-lg">
+        Consulte movimentos, vídeos e instruções sem voltar para a navegação principal.
+      </p>
+    </div>
+    <button
+      type="button"
+      (click)="goToExercises()"
+      class="shrink-0 px-5 py-3 rounded-full bg-[#181818] hover:bg-[#1d1d1d] text-[#F0F0F0] font-bold text-xs inline-flex items-center justify-center gap-2 border border-[#2a2a2a] transition-all active:scale-95"
+    >
+      Abrir Exercícios
+    </button>
+  </div>
+
+  @if (store.sessions().length === 0) {
+    <div class="bg-[#121212] border border-dashed border-[#262626] rounded-[32px] p-8 text-center my-6">
+      <div class="w-14 h-14 rounded-2xl bg-[#181818] border border-[#222] text-[#666] flex items-center justify-center mx-auto mb-3">
+        +
+      </div>
+      <h3 class="font-extrabold text-base text-[#F0F0F0]">Nenhum treino registrado ainda</h3>
+      <p class="text-xs text-[#888] max-w-sm mx-auto mt-1 mb-5">
+        Ao concluir seus treinos na grade, o histórico das repetições e tempos será salvo aqui.
+      </p>
+      <button
+        (click)="goToSchedule()"
+        class="px-6 py-3 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs inline-flex items-center gap-2 shadow-lg shadow-indigo-600/30 border border-indigo-400/30 transition-all active:scale-95"
+      >
+        Ir para a Grade e Treinar
+      </button>
+    </div>
+  } @else {
+    <div class="space-y-3">
+      @for (session of store.sessions(); track session.id) {
+        <div class="bg-[#121212] border border-[#222] rounded-[28px] overflow-hidden transition-all shadow-sm hover:border-[#2a2a2a]">
+          <div
+            (click)="toggleExpand(session.id)"
+            class="p-4 cursor-pointer hover:bg-[#161616] flex items-center justify-between gap-3 select-none transition-colors"
+          >
+            <div class="flex items-center gap-3.5">
+              <div class="w-10 h-10 rounded-2xl bg-[#181818] flex items-center justify-center text-indigo-400 font-bold border border-[#262626] shrink-0">
+                ★
+              </div>
+
+              <div>
+                <div class="flex items-center gap-2">
+                  <h3 class="font-extrabold text-sm text-[#F0F0F0]">{{ session.workoutName }}</h3>
+                  @if (store.levelsMap()[session.levelId]; as level) {
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                      {{ level.name }}
+                    </span>
+                  }
+                </div>
+                <div class="flex items-center gap-3 text-xs text-[#888] mt-1 font-mono">
+                  <span>{{ formatDate(session.startedAt) }}</span>
+                  <span>{{ formatDuration(session.durationSeconds) }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <div class="text-right hidden sm:block">
+                <span class="text-xs font-bold text-[#F0F0F0] block font-mono">
+                  {{ getCompletedSetsCount(session.id) }} séries
+                </span>
+                <span class="text-[10px] text-[#888] font-mono">
+                  {{ getVolumeLabel(session.id) }}
+                </span>
+              </div>
+
+              <button
+                type="button"
+                aria-label="Expandir detalhes"
+                class="p-1.5 text-[#888] hover:text-[#F0F0F0] rounded-full hover:bg-[#202020] transition-colors"
+              >
+                {{ expandedSessionId() === session.id ? '▲' : '▼' }}
+              </button>
+            </div>
+          </div>
+
+          @if (expandedSessionId() === session.id) {
+            <div class="p-4 pt-2 border-t border-[#222] bg-[#0d0d0d] space-y-3 animate-fadeIn">
+              <div class="text-xs font-bold text-[#888] mb-1 flex items-center justify-between">
+                <span>Desempenho Real Registrado por Série</span>
+                <button
+                  type="button"
+                  (click)="deleteSession(session.id)"
+                  class="text-[#666] hover:text-rose-400 flex items-center gap-1 text-[11px] font-medium p-1 transition-colors"
+                >
+                  Excluir Sessão
+                </button>
+              </div>
+
+              <div class="space-y-2">
+                @for (exercise of session.exercises; track exercise.id) {
+                  <div class="bg-[#141414] border border-[#222] rounded-2xl p-3.5">
+                    <div class="flex items-center justify-between mb-2">
+                      <span class="font-bold text-xs text-[#F0F0F0]">
+                        {{ exercise.order }}. {{ exercise.exerciseName }}
+                      </span>
+                      <span class="text-[10px] font-semibold text-[#888] uppercase tracking-wider">
+                        {{ exercise.type === 'TIME' ? 'Isometria' : 'Repetições' }}
+                      </span>
+                    </div>
+
+                    <div class="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+                      @for (set of exercise.sets; track set.id) {
+                        <div
+                          [class]="set.completed
+                            ? 'p-2 rounded-xl text-center border text-xs bg-[#1a1a1a] border-[#2a2a2a] text-[#F0F0F0]'
+                            : 'p-2 rounded-xl text-center border text-xs bg-[#121212] border-[#1f1f1f] text-[#555]'"
+                        >
+                          <span class="text-[10px] block text-[#888] font-bold">S{{ set.setNumber }}</span>
+                          <span class="font-black text-indigo-400 font-mono">
+                            {{
+                              set.actualRepetitions !== null
+                                ? set.actualRepetitions + 'r'
+                                : set.actualDuration !== null
+                                  ? set.actualDuration + 's'
+                                  : set.completed
+                                    ? '✓'
+                                    : '-'
+                            }}
+                          </span>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

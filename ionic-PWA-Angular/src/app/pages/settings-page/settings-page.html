@@ -1,0 +1,136 @@
+<div class="space-y-4 animate-fadeIn">
+  <div class="bg-[#121212] border border-[#222] p-5 rounded-[28px] shadow-lg">
+    <div class="flex items-center gap-2 mb-1">
+      <span class="text-[#888] text-[10px] uppercase tracking-[0.2em] font-bold">Sistema & Preferências</span>
+      <span class="text-indigo-400 text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/20">
+        Local-First
+      </span>
+    </div>
+    <h1 class="text-xl font-black text-[#F0F0F0]">Ajustes & Configurações</h1>
+    <p class="text-xs text-[#888] mt-1">
+      Personalize o comportamento do cronômetro, áudio e gerencie a integridade do seu banco de dados local.
+    </p>
+  </div>
+
+  <div class="bg-[#121212] border border-[#222] rounded-[32px] p-5 shadow-sm space-y-3.5">
+    <h3 class="font-extrabold text-sm text-[#F0F0F0]">Tempo de Descanso Padrão Entre Séries</h3>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+      @for (item of restDurations; track item.value) {
+        <button
+          type="button"
+          (click)="selectRestDuration(item.value)"
+          [class]="store.userSettings().defaultRestDuration === item.value
+            ? 'p-3.5 rounded-2xl border text-left text-xs font-bold transition-all flex items-center justify-between bg-indigo-950/40 border-indigo-500/50 text-indigo-300 ring-1 ring-indigo-500/30'
+            : 'p-3.5 rounded-2xl border text-left text-xs font-bold transition-all flex items-center justify-between bg-[#181818] border-[#262626] text-[#ccc] hover:bg-[#202020]'"
+        >
+          <span>{{ item.label }}</span>
+          @if (store.userSettings().defaultRestDuration === item.value) {
+            <span class="w-2 h-2 rounded-full bg-indigo-400 shadow-[0_0_6px_rgba(99,102,241,0.8)]"></span>
+          }
+        </button>
+      }
+    </div>
+  </div>
+
+  <div class="bg-[#121212] border border-[#222] rounded-[32px] p-5 shadow-sm space-y-3.5">
+    <h3 class="font-extrabold text-sm text-[#F0F0F0]">Áudio & Sinais do Timer</h3>
+
+    <div class="space-y-2">
+      <div class="flex items-center justify-between bg-[#181818] p-4 rounded-2xl border border-[#262626]">
+        <div>
+          <span class="font-bold text-xs text-[#F0F0F0] block">Sons do Timer</span>
+          <span class="text-[11px] text-[#888]">Beeps regressivos e sinal sonoro ao concluir descanso</span>
+        </div>
+        <button
+          type="button"
+          (click)="toggleSetting('soundEnabled')"
+          class="w-12 h-6 flex items-center rounded-full p-1 transition-colors"
+          [ngClass]="store.userSettings().soundEnabled ? 'bg-indigo-600 justify-end' : 'bg-[#2a2a2a] justify-start'"
+        >
+          <span class="bg-white w-4 h-4 rounded-full shadow-md block"></span>
+        </button>
+      </div>
+
+      <button
+        type="button"
+        (click)="testSound()"
+        class="w-full py-3 px-4 rounded-2xl bg-[#181818] hover:bg-[#202020] border border-[#262626] text-[#F0F0F0] text-xs font-bold flex items-center justify-between transition-colors"
+      >
+        <span>Testar Som de Conclusão</span>
+        <span class="text-[10px] text-indigo-400">Web Audio</span>
+      </button>
+
+      <div class="flex items-center justify-between bg-[#181818] p-4 rounded-2xl border border-[#262626]">
+        <div>
+          <span class="font-bold text-xs text-[#F0F0F0] block">Iniciar descanso automático</span>
+          <span class="text-[11px] text-[#888]">Mantém o comportamento rápido do treino ativo após cada série</span>
+        </div>
+        <button
+          type="button"
+          (click)="toggleSetting('autoStartRestTimer')"
+          class="w-12 h-6 flex items-center rounded-full p-1 transition-colors"
+          [ngClass]="store.userSettings().autoStartRestTimer ? 'bg-indigo-600 justify-end' : 'bg-[#2a2a2a] justify-start'"
+        >
+          <span class="bg-white w-4 h-4 rounded-full shadow-md block"></span>
+        </button>
+      </div>
+
+      <div class="flex items-center justify-between bg-[#181818] p-4 rounded-2xl border border-[#262626]">
+        <div>
+          <span class="font-bold text-xs text-[#F0F0F0] block">Vibração</span>
+          <span class="text-[11px] text-[#888]">Confirmação tátil no fim da série, descanso e treino</span>
+        </div>
+        <button
+          type="button"
+          (click)="toggleSetting('vibrationEnabled')"
+          class="w-12 h-6 flex items-center rounded-full p-1 transition-colors"
+          [ngClass]="store.userSettings().vibrationEnabled ? 'bg-indigo-600 justify-end' : 'bg-[#2a2a2a] justify-start'"
+        >
+          <span class="bg-white w-4 h-4 rounded-full shadow-md block"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-[#121212] border border-[#222] rounded-[32px] p-5 shadow-sm space-y-3">
+    <h3 class="font-extrabold text-sm text-[#F0F0F0]">Manutenção da Grade e Dados</h3>
+
+    <div class="space-y-2">
+      <button type="button" (click)="resetSchedule()" class="w-full py-3.5 px-4 rounded-2xl bg-[#181818] hover:bg-[#202020] border border-[#262626] text-[#F0F0F0] text-xs font-bold flex items-center justify-between transition-colors">
+        <span>Restaurar Grade Padrão do Nível {{ store.currentLevelInfo().name }}</span>
+        <span class="text-[10px] text-[#888]">Padrão sugerido</span>
+      </button>
+
+      <button type="button" (click)="clearAllData()" class="w-full py-3.5 px-4 rounded-2xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-300 text-xs font-bold flex items-center justify-between transition-colors">
+        <span>Limpar Todos os Dados e Histórico</span>
+        <span class="text-[10px] text-rose-400/80">Redefinir app</span>
+      </button>
+
+      <button type="button" (click)="clearHistory()" class="w-full py-3.5 px-4 rounded-2xl bg-[#181818] hover:bg-[#202020] border border-rose-500/20 text-[#F0F0F0] text-xs font-bold flex items-center justify-between transition-colors">
+        <span>Limpar Apenas o Histórico de Treinos</span>
+        <span class="text-[10px] text-rose-300/80">Sessões</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="bg-[#121212] border border-[#222] rounded-[32px] p-5 text-xs text-[#888] space-y-2">
+    <div class="font-bold text-[#F0F0F0]">Arquitetura Desacoplada & PWA</div>
+    <p class="leading-relaxed">
+      Este aplicativo armazena todos os seus treinos e registros localmente no seu dispositivo,
+      sem exigir login ou conexão de rede para treinar e registrar repetições.
+    </p>
+  </div>
+
+  <div class="bg-[#121212] border border-[#222] rounded-[32px] p-5 text-xs text-[#888] space-y-3">
+    <div class="font-bold text-[#F0F0F0]">Informações do Aplicativo</div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+      @for (item of appInfo; track item.label) {
+        <div class="bg-[#181818] border border-[#262626] rounded-2xl p-3">
+          <span class="text-[10px] uppercase tracking-wider font-bold text-[#666] block">{{ item.label }}</span>
+          <span class="text-xs text-[#ddd] block mt-1">{{ item.value }}</span>
+        </div>
+      }
+    </div>
+  </div>
+</div>
