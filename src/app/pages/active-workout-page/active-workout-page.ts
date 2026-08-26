@@ -3,6 +3,7 @@ import { Component, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseMediaViewer } from '../../components/exercise-media-viewer/exercise-media-viewer';
 import { ActiveWorkoutSession, TimerMode } from '../../services/active-workout-session';
+import { soundService } from '../../services/soundService';
 import { AppStore } from '../../store/app-store';
 import { Workout } from '../../types';
 
@@ -32,6 +33,7 @@ export class ActiveWorkoutPage {
   protected readonly nextActionLabel = this.session.nextActionLabel;
   protected readonly totalSetsInWorkout = this.session.totalSetsInWorkout;
   protected readonly completedSetsCount = this.session.completedSetsCount;
+  protected readonly canSavePartial = computed(() => this.completedSetsCount() > 0);
 
   protected readonly restPresetValues = [30, 60, 90, 120, 180];
   protected readonly inputPresetValues = [0, 3, 5, 8, 10, 12, 15];
@@ -86,7 +88,8 @@ export class ActiveWorkoutPage {
     this.session.setTimerMode(nextMode);
   }
 
-  protected togglePause(): void {
+  protected async togglePause(): Promise<void> {
+    await soundService.unlock();
     this.session.togglePause();
   }
 
@@ -110,11 +113,13 @@ export class ActiveWorkoutPage {
     this.session.setExactRest(seconds);
   }
 
-  protected skipRest(): void {
+  protected async skipRest(): Promise<void> {
+    await soundService.unlock();
     this.session.skipRest();
   }
 
   protected async completeSet(): Promise<void> {
+    await soundService.unlock();
     const workoutSession = this.session.completeSet();
     if (!workoutSession) {
       return;
@@ -125,7 +130,24 @@ export class ActiveWorkoutPage {
     void this.router.navigate(['/summary', workoutSession.id]);
   }
 
+  protected async finishWorkoutEarly(): Promise<void> {
+    if (!this.canSavePartial()) {
+      return;
+    }
+
+    const workoutSession = this.session.finishWorkoutEarly();
+    if (!workoutSession) {
+      return;
+    }
+
+    await this.store.saveWorkoutSession(workoutSession);
+    this.showExitConfirm.set(false);
+    this.session.destroy();
+    void this.router.navigate(['/summary', workoutSession.id]);
+  }
+
   protected async confirmCancelWorkout(): Promise<void> {
+    this.showExitConfirm.set(false);
     this.session.destroy();
     void this.router.navigate(['/app/schedule']);
   }

@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, effect, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { AppStore } from '../../store/app-store';
+import { WorkoutSession } from '../../types';
 
 @Component({
   selector: 'app-history-page',
@@ -59,6 +60,15 @@ export class HistoryPage {
     );
   }
 
+  protected getTargetSetsCount(sessionId: string): number {
+    const session = this.store.getSessionById(sessionId);
+    if (!session) {
+      return 0;
+    }
+
+    return session.exercises.reduce((total, exercise) => total + exercise.sets.length, 0);
+  }
+
   protected getVolumeLabel(sessionId: string): string {
     const session = this.store.getSessionById(sessionId);
     if (!session) {
@@ -89,6 +99,16 @@ export class HistoryPage {
     if (window.confirm('Tem certeza que deseja excluir este registro do histórico?')) {
       await this.store.deleteWorkoutSession(sessionId);
     }
+  }
+
+  protected getStatusLabel(session: WorkoutSession): string {
+    return session.status === 'COMPLETED' ? 'Concluído' : 'Encerrado';
+  }
+
+  protected getStatusClasses(session: WorkoutSession): string {
+    return session.status === 'COMPLETED'
+      ? 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20'
+      : 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20';
   }
 
   protected goToSchedule(): void {

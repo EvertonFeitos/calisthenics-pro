@@ -1,4 +1,5 @@
 import { ActiveWorkoutSession } from './active-workout-session';
+import { hapticService } from './hapticService';
 import { soundService } from './soundService';
 import { Exercise, Workout } from '../types';
 
@@ -33,6 +34,7 @@ describe('ActiveWorkoutSession', () => {
     spyOn(soundService, 'playRestFinished');
     spyOn(soundService, 'playSetComplete');
     spyOn(soundService, 'playWorkoutComplete');
+    spyOn(hapticService, 'vibrate').and.returnValue(true);
   });
 
   afterEach(() => {
@@ -144,5 +146,40 @@ describe('ActiveWorkoutSession', () => {
     service.adjustRest(-100);
 
     expect(service.timeLeft()).toBe(5);
+  });
+
+  it('salva sessao parcial como CANCELLED sem apagar series concluidas', () => {
+    const workout: Workout = {
+      id: 'w_partial',
+      levelId: 'basico',
+      name: 'Treino Parcial',
+      description: 'Treino para encerramento antecipado',
+      category: 'push',
+      estimatedMinutes: 10,
+      exercises: [
+        {
+          id: 'we_partial_1',
+          workoutId: 'w_partial',
+          exerciseId: 'pushup',
+          order: 1,
+          sets: 3,
+          targetRepetitions: 8,
+          restDuration: 30,
+        },
+      ],
+    };
+
+    service.initialize(workout, 'basico', { pushup: repetitionExercise }, 90);
+    service.setInputValue(9);
+    service.completeSet();
+
+    const session = service.finishWorkoutEarly();
+
+    expect(session).not.toBeNull();
+    expect(session?.status).toBe('CANCELLED');
+    expect(session?.notes).toContain('encerrada');
+    expect(session?.exercises[0].sets[0].actualRepetitions).toBe(9);
+    expect(session?.exercises[0].sets[1].completed).toBeFalse();
+    expect(soundService.playWorkoutComplete).not.toHaveBeenCalled();
   });
 });

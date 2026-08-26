@@ -60,6 +60,9 @@
               <div>
                 <div class="flex items-center gap-2">
                   <h3 class="font-extrabold text-sm text-[#F0F0F0]">{{ session.workoutName }}</h3>
+                  <span [class]="getStatusClasses(session)">
+                    {{ getStatusLabel(session) }}
+                  </span>
                   @if (store.levelsMap()[session.levelId]; as level) {
                     <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
                       {{ level.name }}
@@ -76,7 +79,7 @@
             <div class="flex items-center gap-3">
               <div class="text-right hidden sm:block">
                 <span class="text-xs font-bold text-[#F0F0F0] block font-mono">
-                  {{ getCompletedSetsCount(session.id) }} séries
+                  {{ getCompletedSetsCount(session.id) }}/{{ getTargetSetsCount(session.id) }} séries
                 </span>
                 <span class="text-[10px] text-[#888] font-mono">
                   {{ getVolumeLabel(session.id) }}

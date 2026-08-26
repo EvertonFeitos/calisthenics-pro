@@ -17,6 +17,7 @@ export class ProgressPage {
     let totalRepetitions = 0;
     let totalHoldSeconds = 0;
     let totalMinutes = 0;
+    let trackedSessions = 0;
 
     const personalRecords: Array<{
       exerciseId: string;
@@ -39,7 +40,11 @@ export class ProgressPage {
     >();
 
     const sessions = [...this.store.sessions()].reverse();
+    const completedWorkouts = sessions.filter((session) => session.status === 'COMPLETED').length;
+    const partialWorkouts = sessions.filter((session) => session.status === 'CANCELLED').length;
+
     for (const session of sessions) {
+      let sessionHasVolume = false;
       totalMinutes += Math.floor(session.durationSeconds / 60);
       for (const exercise of session.exercises) {
         const definition = this.store.exercisesMap()[exercise.exerciseId];
@@ -58,6 +63,7 @@ export class ProgressPage {
           if (!set.completed) {
             continue;
           }
+          sessionHasVolume = true;
           if (set.actualRepetitions !== null) {
             totalRepetitions += set.actualRepetitions;
             existing.maxReps = Math.max(existing.maxReps, set.actualRepetitions);
@@ -87,6 +93,10 @@ export class ProgressPage {
           timelineMap.set(exercise.exerciseId, timeline);
         }
       }
+
+      if (sessionHasVolume) {
+        trackedSessions += 1;
+      }
     }
 
     for (const [exerciseId, record] of prMap.entries()) {
@@ -109,7 +119,9 @@ export class ProgressPage {
       totalRepetitions,
       totalHoldSeconds,
       totalMinutes,
-      totalWorkouts: this.store.sessions().length,
+      totalWorkouts: completedWorkouts,
+      partialWorkouts,
+      trackedSessions,
       personalRecords,
       timeline,
     };

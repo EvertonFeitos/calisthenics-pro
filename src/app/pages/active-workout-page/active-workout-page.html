@@ -430,10 +430,14 @@
           </div>
           <h3 class="font-black text-lg text-[#F0F0F0]">Interromper Treino?</h3>
           <p class="text-xs text-[#888] mt-1 mb-5">
-            Se você sair agora, o progresso desta sessão em andamento será descartado.
+            @if (canSavePartial()) {
+              Você pode salvar o progresso já registrado como sessão parcial ou descartar tudo e voltar para a grade.
+            } @else {
+              Nenhuma série foi concluída ainda. Se sair agora, a sessão será descartada.
+            }
           </p>
 
-          <div class="flex gap-2.5">
+          <div class="flex flex-col gap-2.5">
             <button
               type="button"
               id="cancel-quit-btn"
@@ -444,11 +448,22 @@
             </button>
             <button
               type="button"
+              id="save-partial-btn"
+              (click)="finishWorkoutEarly()"
+              [disabled]="!canSavePartial()"
+              [class]="canSavePartial()
+                ? 'w-full py-3 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs shadow-lg shadow-indigo-600/20 border border-indigo-400/30'
+                : 'w-full py-3 rounded-full bg-[#1a1a1a] border border-[#262626] text-[#666] font-black text-xs cursor-not-allowed'"
+            >
+              Finalizar e Salvar Parcial
+            </button>
+            <button
+              type="button"
               id="confirm-quit-btn"
               (click)="confirmCancelWorkout()"
-              class="flex-1 py-3 rounded-full bg-rose-500 hover:bg-rose-400 text-white font-black text-xs shadow-lg shadow-rose-500/20"
+              class="w-full py-3 rounded-full bg-rose-500 hover:bg-rose-400 text-white font-black text-xs shadow-lg shadow-rose-500/20"
             >
-              Encerrar
+              Descartar Sessão
             </button>
           </div>
         </div>

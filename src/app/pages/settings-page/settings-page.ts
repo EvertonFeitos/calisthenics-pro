@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { ReactiveFormsModule, UntypedFormBuilder } from '@angular/forms';
+import { hapticService } from '../../services/hapticService';
 import { soundService } from '../../services/soundService';
 import { AppStore } from '../../store/app-store';
 
@@ -48,8 +49,21 @@ export class SettingsPage {
     await this.store.updateSettings(next);
   }
 
-  protected testSound(): void {
+  protected async testSound(): Promise<void> {
+    await soundService.unlock();
     soundService.playWorkoutComplete();
+  }
+
+  protected testVibration(): void {
+    hapticService.vibrate([40, 30, 60]);
+  }
+
+  protected audioCapabilityLabel(): string {
+    return soundService.isSupported() ? 'Web Audio' : 'Sem suporte detectado';
+  }
+
+  protected vibrationCapabilityLabel(): string {
+    return hapticService.isSupported() ? 'API do dispositivo' : 'Sem suporte detectado';
   }
 
   protected async resetSchedule(): Promise<void> {

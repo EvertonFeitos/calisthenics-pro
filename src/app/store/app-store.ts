@@ -10,6 +10,7 @@ import {
   WorkoutScheduleDay,
   WorkoutSession,
 } from '../types';
+import { hapticService } from '../services/hapticService';
 import { soundService } from '../services/soundService';
 import { workoutRepository } from '../services/storage/repository';
 
@@ -115,6 +116,7 @@ export class AppStore {
   async updateSettings(settings: UserSettings): Promise<void> {
     this.userSettings.set(settings);
     soundService.setEnabled(settings.soundEnabled);
+    hapticService.setEnabled(settings.vibrationEnabled);
     await workoutRepository.saveUserSettings(settings);
   }
 
@@ -238,6 +240,7 @@ export class AppStore {
       this.userSettings.set(userSettings);
       this.aiAnalyses.set(aiAnalyses);
       soundService.setEnabled(userSettings.soundEnabled);
+      hapticService.setEnabled(userSettings.vibrationEnabled);
 
       const schedule = await workoutRepository.getSchedule(currentLevelId);
       this.schedule.set(schedule);

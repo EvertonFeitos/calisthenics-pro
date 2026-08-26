@@ -7,6 +7,7 @@ import {
   Workout,
   WorkoutSession,
 } from '../types';
+import { hapticService } from './hapticService';
 import { soundService } from './soundService';
 
 export type WorkoutPhase = 'WORKING' | 'RESTING' | 'PAUSED';
@@ -196,7 +197,7 @@ export class ActiveWorkoutSession {
     }
 
     soundService.playSetComplete();
-    this.tryVibrate([30, 20, 30]);
+    hapticService.vibrate([30, 20, 30]);
 
     const actualRepetitions = !this.isTimeBased()
       ? this.skipInputVal()
@@ -247,24 +248,21 @@ export class ActiveWorkoutSession {
     return `${minutes}:${remainder < 10 ? '0' : ''}${remainder}`;
   }
 
+  finishWorkoutEarly(): WorkoutSession | null {
+    if (!this.workout()) {
+      return null;
+    }
+
+    return this.buildWorkoutSession(
+      'CANCELLED',
+      'Sessão encerrada antes da conclusão de todas as séries.'
+    );
+  }
+
   private finishWorkout(): WorkoutSession {
     soundService.playWorkoutComplete();
-    this.tryVibrate([60, 40, 60, 40, 90]);
-    this.clearAllTimers();
-
-    const session: WorkoutSession = {
-      id: `session_${Date.now()}`,
-      workoutId: this.workout()!.id,
-      levelId: this.currentLevelId(),
-      workoutName: this.workout()!.name,
-      startedAt: this.startedAt(),
-      finishedAt: new Date().toISOString(),
-      durationSeconds: this.totalWorkoutDuration(),
-      status: 'COMPLETED',
-      exercises: this.sessionExercises(),
-    };
-
-    return session;
+    hapticService.vibrate([60, 40, 60, 40, 90]);
+    return this.buildWorkoutSession('COMPLETED');
   }
 
   private advanceToNextSetAfterRest(): void {
@@ -337,7 +335,7 @@ export class ActiveWorkoutSession {
         if (next === 0) {
           this.clearPhaseTimer();
           soundService.playRestFinished();
-          this.tryVibrate([20, 20, 20]);
+          hapticService.vibrate([20, 20, 20]);
           this.advanceToNextSetAfterRest();
         }
       }, 1000);
@@ -411,9 +409,23 @@ export class ActiveWorkoutSession {
     }
   }
 
-  private tryVibrate(pattern: number | number[]): void {
-    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-      navigator.vibrate(pattern);
-    }
+  private buildWorkoutSession(
+    status: WorkoutSession['status'],
+    notes?: string
+  ): WorkoutSession {
+    this.clearAllTimers();
+
+    return {
+      id: `session_${Date.now()}`,
+      workoutId: this.workout()!.id,
+      levelId: this.currentLevelId(),
+      workoutName: this.workout()!.name,
+      startedAt: this.startedAt(),
+      finishedAt: new Date().toISOString(),
+      durationSeconds: this.totalWorkoutDuration(),
+      status,
+      exercises: this.sessionExercises(),
+      notes,
+    };
   }
 }

@@ -20,6 +20,7 @@ import {
   WorkoutExercise,
   WorkoutScheduleDay,
 } from '../../types';
+import { soundService } from '../../services/soundService';
 
 @Component({
   selector: 'app-schedule-page',
@@ -89,8 +90,9 @@ export class SchedulePage {
     this.selectedWorkoutForDetail.set(null);
   }
 
-  protected startWorkout(workout: Workout): void {
+  protected async startWorkout(workout: Workout): Promise<void> {
     this.selectedWorkoutForDetail.set(null);
+    await soundService.unlock();
     void this.router.navigate(['/workout', workout.id]);
   }
 

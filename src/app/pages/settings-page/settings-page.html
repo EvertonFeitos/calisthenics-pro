@@ -58,7 +58,7 @@
         class="w-full py-3 px-4 rounded-2xl bg-[#181818] hover:bg-[#202020] border border-[#262626] text-[#F0F0F0] text-xs font-bold flex items-center justify-between transition-colors"
       >
         <span>Testar Som de Conclusão</span>
-        <span class="text-[10px] text-indigo-400">Web Audio</span>
+        <span class="text-[10px] text-indigo-400">{{ audioCapabilityLabel() }}</span>
       </button>
 
       <div class="flex items-center justify-between bg-[#181818] p-4 rounded-2xl border border-[#262626]">
@@ -90,6 +90,15 @@
           <span class="bg-white w-4 h-4 rounded-full shadow-md block"></span>
         </button>
       </div>
+
+      <button
+        type="button"
+        (click)="testVibration()"
+        class="w-full py-3 px-4 rounded-2xl bg-[#181818] hover:bg-[#202020] border border-[#262626] text-[#F0F0F0] text-xs font-bold flex items-center justify-between transition-colors"
+      >
+        <span>Testar Vibração</span>
+        <span class="text-[10px] text-indigo-400">{{ vibrationCapabilityLabel() }}</span>
+      </button>
     </div>
   </div>
 

@@ -29,7 +29,7 @@
     </button>
   </div>
 
-  @if (progress().totalWorkouts === 0) {
+  @if (progress().trackedSessions === 0) {
     <div class="bg-[#121212] border border-dashed border-[#262626] rounded-[32px] p-8 text-center">
       <div class="w-14 h-14 rounded-2xl bg-[#181818] border border-[#222] text-[#666] flex items-center justify-center mx-auto mb-3">
         ↗
@@ -63,6 +63,13 @@
       <span class="text-[10px] text-[#666] mt-1 font-medium">Minutos em treino</span>
     </div>
   </div>
+
+  @if (progress().partialWorkouts > 0) {
+    <div class="bg-amber-500/10 border border-amber-500/20 rounded-[24px] px-4 py-3 text-xs text-amber-200">
+      {{ progress().partialWorkouts }}
+      {{ progress().partialWorkouts === 1 ? 'sessão parcial salva também entra nas métricas de volume.' : 'sessões parciais salvas também entram nas métricas de volume.' }}
+    </div>
+  }
 
   <div class="bg-[#121212] border border-[#222] rounded-[32px] p-5 shadow-sm">
     <div class="flex items-center justify-between mb-3">

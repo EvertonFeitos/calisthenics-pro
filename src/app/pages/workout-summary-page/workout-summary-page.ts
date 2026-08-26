@@ -40,6 +40,29 @@ export class WorkoutSummaryPage {
     return this.store.levelsMap()[session.levelId] ?? this.store.currentLevelInfo();
   });
 
+  protected readonly statusCopy = computed(() => {
+    const session = this.session();
+    if (!session || session.status === 'COMPLETED') {
+      return {
+        badge: 'Treino Concluído com Sucesso',
+        subtitle: 'Registro sincronizado com sucesso no histórico.',
+        iconWrapperClass:
+          'w-16 h-16 rounded-2xl bg-indigo-600 text-white flex items-center justify-center mx-auto mb-3 shadow-xl shadow-indigo-600/30 border border-indigo-400/40',
+        badgeClass:
+          'text-[10px] font-extrabold uppercase tracking-[0.2em] text-indigo-400 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20',
+      };
+    }
+
+    return {
+      badge: 'Treino Encerrado com Progresso Salvo',
+      subtitle: 'Sessão parcial registrada no histórico local para você retomar a evolução depois.',
+      iconWrapperClass:
+        'w-16 h-16 rounded-2xl bg-amber-500/20 text-amber-300 flex items-center justify-center mx-auto mb-3 shadow-xl shadow-amber-500/10 border border-amber-400/30',
+      badgeClass:
+        'text-[10px] font-extrabold uppercase tracking-[0.2em] text-amber-300 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20',
+    };
+  });
+
   protected readonly totals = computed(() => {
     const session = this.session();
     let totalRepsDone = 0;
@@ -99,7 +122,7 @@ export class WorkoutSummaryPage {
             : '✓'
       )
       .join(' → ');
-    return value || 'Concluído';
+    return value || 'Nenhuma série concluída';
   }
 
   protected getCompletedSetCount(
